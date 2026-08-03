@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AD Tech Solution — Expense &amp; Salary Tracker</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Brand palette — pulled from the AD Tech Solution logo */
+    --teal:#2CA795;
+    --teal-bg:#E4F4F0;
+    --navy:#0B2A45;
+    --navy-soft:#153A5C;
+    --sky:#8FC5EF;
+    --sky-bg:#EAF4FC;
+    --ink-black:#161616;
+    --amber:#B8860B;
+    --amber-bg:#FBF3E1;
+    --coral:#C0533E;
+    --coral-bg:#FBEAE6;
+
+    --paper:#F3F7F9;
+    --card:#FFFFFF;
+    --line:#E1E8EC;
+    --muted:#66727C;
+    --text:#12202B;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Inter', sans-serif;
+    background:var(--paper);
+    color:var(--text);
+    display:flex;
+    min-height:100vh;
+  }
+  ::selection{ background: var(--teal-bg); color: var(--teal); }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:240px;
+    background:var(--navy);
+    color:#EAF1F6;
+    flex-shrink:0;
+    display:flex;
+    flex-direction:column;
+    padding:26px 0;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:0 22px 18px;
+    border-bottom:1px solid #21486B;
+    margin-bottom:14px;
+  }
+  .brand img{ width:40px; height:40px; object-fit:contain; border-radius:8px; background:#fff; padding:3px; }
+  .brand-text{ display:flex; flex-direction:column; }
+  .brand-name{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:15.5px; line-height:1.2; color:#fff; }
+  .brand-sub{ font-size:10.5px; color:var(--sky); letter-spacing:0.5px; margin-top:2px; }
+
+  .nav-section-label{
+    padding:14px 22px 6px;
+    font-size:10.5px;
+    color:#5E7791;
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+    font-weight:600;
+  }
+  .nav-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:11px 22px;
+    font-size:14.5px;
+    font-weight:500;
+    color:#AFC2D3;
+    cursor:pointer;
+    border-left:3px solid transparent;
+    transition:all .15s ease;
+  }
+  .nav-item:hover{ background:var(--navy-soft); color:#fff; }
+  .nav-item.active{
+    background:var(--navy-soft);
+    color:#fff;
+    border-left:3px solid var(--teal);
+  }
+  .nav-num{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:#4A6A85; width:16px; }
+  .nav-item.active .nav-num{ color:var(--teal); }
+
+  .sidebar-foot{
+    margin-top:auto;
+    padding:16px 22px 0;
+    font-size:11px;
+    color:#4A6A85;
+    border-top:1px solid #21486B;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .status-dot{ width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:6px; background:#5E7791; }
+  .status-dot.ok{ background:var(--teal); }
+  .status-dot.bad{ background:var(--coral); }
+  .settings-link{ cursor:pointer; color:#6E8AA3; text-decoration:underline; font-size:10.5px; }
+  .settings-link:hover{ color:var(--sky); }
+
+  /* ---------- Main ---------- */
+  .main{ flex:1; padding:36px 44px; max-width:1200px; }
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    margin-bottom:28px;
+  }
+  .page-title{ font-family:'Space Grotesk', sans-serif; font-size:26px; font-weight:600; }
+  .page-sub{ color:var(--muted); font-size:13.5px; margin-top:4px; }
+  .topbar-actions{ display:flex; gap:10px; align-items:center; }
+
+  input, select{
+    font-family:'Inter', sans-serif;
+    font-size:13.5px;
+    padding:9px 12px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    background:#fff;
+    color:var(--text);
+    outline:none;
+  }
+  input:focus, select:focus{ border-color:var(--sky); }
+
+  .btn{
+    font-family:'Inter', sans-serif;
+    font-size:13.5px;
+    font-weight:600;
+    padding:9px 16px;
+    border-radius:7px;
+    border:none;
+    cursor:pointer;
+    transition:opacity .15s ease;
+  }
+  .btn:hover{ opacity:.88; }
+  .btn-primary{ background:var(--navy); color:#fff; }
+  .btn-ghost{ background:#fff; color:var(--navy); border:1px solid var(--line); }
+  .btn-pdf{ background:var(--teal); color:#fff; }
+  .btn-sm{ padding:5px 10px; font-size:12px; border-radius:5px; }
+  .btn-danger{ background:var(--coral-bg); color:var(--coral); }
+
+  /* ---------- Card / Table ---------- */
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    margin-bottom:22px;
+    overflow:hidden;
+  }
+  .card-head{
+    padding:16px 20px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .card-title{ font-weight:600; font-size:15px; }
+  table{ width:100%; border-collapse:collapse; }
+  th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    color:var(--muted);
+    font-weight:600;
+    padding:12px 20px;
+    background:#F8FBFC;
+    border-bottom:1px solid var(--line);
+  }
+  td{
+    padding:13px 20px;
+    font-size:13.5px;
+    border-bottom:1px solid #EEF3F5;
+  }
+  tr:last-child td{ border-bottom:none; }
+  .amount{ font-family:'IBM Plex Mono', monospace; font-weight:500; }
+  .status-pill{
+    font-size:11px;
+    font-weight:600;
+    padding:3px 10px;
+    border-radius:20px;
+    display:inline-block;
+  }
+  .status-paid{ background:var(--teal-bg); color:var(--teal); }
+  .status-pending{ background:var(--amber-bg); color:var(--amber); }
+  .empty-row td{ text-align:center; color:var(--muted); padding:34px 20px; font-size:13.5px; }
+  .row-actions{ display:flex; gap:6px; }
+
+  /* ---------- Form panel ---------- */
+  .form-panel{
+    display:none;
+    padding:18px 20px;
+    background:#F8FBFC;
+    border-bottom:1px solid var(--line);
+  }
+  .form-panel.open{ display:block; }
+  .form-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:12px; margin-bottom:12px; }
+  .field label{ display:block; font-size:11.5px; font-weight:600; color:var(--muted); margin-bottom:5px; letter-spacing:0.2px; }
+  .field input, .field select{ width:100%; }
+
+  /* ---------- Summary page ---------- */
+  .stat-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:26px; }
+  .stat-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 20px;
+    position:relative;
+    overflow:hidden;
+  }
+  .stat-card::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:4px; }
+  .stat-card.salary::before{ background:var(--teal); }
+  .stat-card.expense::before{ background:var(--coral); }
+  .stat-card.wages::before{ background:var(--amber); }
+  .stat-card.total::before{ background:var(--navy); }
+  .stat-label{ font-size:11.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px; }
+  .stat-value{ font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:600; }
+  .stat-card.total .stat-value{ color:var(--navy); }
+
+  .stub{ display:flex; align-items:center; gap:10px; margin: 4px 0 26px; color:var(--muted); font-size:12px; }
+  .stub-line{ flex:1; border-top:1.5px dashed var(--line); }
+  .stub-dot{ width:6px; height:6px; border-radius:50%; background:var(--line); }
+
+  .month-input{ font-family:'IBM Plex Mono', monospace; }
+
+  /* ---------- API config banner ---------- */
+  .api-banner{
+    display:none;
+    background:var(--coral-bg);
+    color:var(--coral);
+    border:1px solid #F0C6BC;
+    border-radius:10px;
+    padding:14px 18px;
+    margin-bottom:22px;
+    font-size:13px;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .api-banner.show{ display:flex; }
+  .api-banner input{ flex:1; min-width:240px; }
+
+  .settings-modal-backdrop{
+    display:none;
+    position:fixed; inset:0; background:rgba(11,42,69,0.45);
+    align-items:center; justify-content:center; z-index:50;
+  }
+  .settings-modal-backdrop.show{ display:flex; }
+  .settings-modal{
+    background:#fff; border-radius:12px; padding:24px; width:420px; max-width:90vw;
+  }
+  .settings-modal h3{ font-family:'Space Grotesk', sans-serif; font-size:17px; margin-bottom:6px; }
+  .settings-modal p{ font-size:12.5px; color:var(--muted); margin-bottom:14px; }
+  .settings-modal input{ width:100%; margin-bottom:12px; }
+  .settings-modal-actions{ display:flex; gap:10px; justify-content:flex-end; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="brand">
+    <img src="assets/logo.png" alt="AD Tech Solution logo">
+    <div class="brand-text">
+      <div class="brand-name">AD Tech Solution</div>
+      <div class="brand-sub">EXPENSE &amp; SALARY LEDGER</div>
+    </div>
+  </div>
+
+  <div class="nav-section-label">Manage</div>
+  <div class="nav-item active" data-page="employees"><span class="nav-num">01</span>Employees</div>
+  <div class="nav-item" data-page="salary"><span class="nav-num">02</span>Salary</div>
+  <div class="nav-item" data-page="expenses"><span class="nav-num">03</span>Employee Expenses</div>
+  <div class="nav-item" data-page="wages"><span class="nav-num">04</span>Company Wages</div>
+  <div class="nav-section-label">Reports</div>
+  <div class="nav-item" data-page="summary"><span class="nav-num">05</span>Monthly Summary</div>
+
+  <div class="sidebar-foot">
+    <span><span class="status-dot" id="statusDot"></span><span id="apiStatus">checking…</span></span>
+    <span class="settings-link" onclick="openSettings()">API settings</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="api-banner" id="apiBanner">
+    <span>⚠ Can't reach the backend API. Set the correct API URL:</span>
+    <input id="apiBannerInput" placeholder="https://your-backend-url">
+    <button class="btn btn-primary btn-sm" onclick="saveApiFromBanner()">Connect</button>
+  </div>
+
+  <!-- ============ EMPLOYEES ============ -->
+  <div class="page" id="page-employees">
+    <div class="topbar">
+      <div><div class="page-title">Employees</div><div class="page-sub">Everyone on the payroll, in one place</div></div>
+      <button class="btn btn-primary" onclick="toggleForm('emp')">+ Add employee</button>
+    </div>
+
+    <div class="card">
+      <div class="form-panel" id="form-emp">
+        <div class="form-grid">
+          <div class="field"><label>Name</label><input id="emp-name" placeholder="Rahul Sharma"></div>
+          <div class="field"><label>Designation</label><input id="emp-designation" placeholder="Developer"></div>
+          <div class="field"><label>Monthly salary (₹)</label><input id="emp-salary" type="number" placeholder="45000"></div>
+          <div class="field"><label>Contact</label><input id="emp-contact" placeholder="9999999999"></div>
+          <div class="field"><label>Join date</label><input id="emp-joindate" type="date"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveEmployee()">Save employee</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleForm('emp')">Cancel</button>
+      </div>
+      <table>
+        <thead><tr><th>Name</th><th>Designation</th><th>Salary</th><th>Contact</th><th>Joined</th><th></th></tr></thead>
+        <tbody id="employees-body"><tr class="empty-row"><td colspan="6">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ SALARY ============ -->
+  <div class="page" id="page-salary" style="display:none">
+    <div class="topbar">
+      <div><div class="page-title">Salary</div><div class="page-sub">Month-wise salary payouts</div></div>
+      <div class="topbar-actions">
+        <input type="month" id="salary-month" class="month-input" onchange="loadSalary()">
+        <button class="btn btn-primary" onclick="toggleForm('sal')">+ Add record</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-panel" id="form-sal">
+        <div class="form-grid">
+          <div class="field"><label>Employee</label><select id="sal-employee"></select></div>
+          <div class="field"><label>Amount (₹)</label><input id="sal-amount" type="number" placeholder="45000"></div>
+          <div class="field"><label>Status</label><select id="sal-status"><option value="pending">Pending</option><option value="paid">Paid</option></select></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveSalary()">Save record</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleForm('sal')">Cancel</button>
+      </div>
+      <table>
+        <thead><tr><th>Employee</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+        <tbody id="salary-body"><tr class="empty-row"><td colspan="4">Pick a month to see records</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ EMPLOYEE EXPENSES ============ -->
+  <div class="page" id="page-expenses" style="display:none">
+    <div class="topbar">
+      <div><div class="page-title">Employee Expenses</div><div class="page-sub">Reimbursements &amp; claims, month-wise</div></div>
+      <div class="topbar-actions">
+        <input type="month" id="exp-month" class="month-input" onchange="loadExpenses()">
+        <button class="btn btn-primary" onclick="toggleForm('exp')">+ Add expense</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-panel" id="form-exp">
+        <div class="form-grid">
+          <div class="field"><label>Employee</label><select id="exp-employee"></select></div>
+          <div class="field"><label>Amount (₹)</label><input id="exp-amount" type="number" placeholder="2000"></div>
+          <div class="field"><label>Reason</label><input id="exp-reason" placeholder="Travel reimbursement"></div>
+          <div class="field"><label>Date</label><input id="exp-date" type="date"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveExpense()">Save expense</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleForm('exp')">Cancel</button>
+      </div>
+      <table>
+        <thead><tr><th>Employee</th><th>Amount</th><th>Reason</th><th>Date</th><th></th></tr></thead>
+        <tbody id="expenses-body"><tr class="empty-row"><td colspan="5">Pick a month to see records</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ COMPANY WAGES ============ -->
+  <div class="page" id="page-wages" style="display:none">
+    <div class="topbar">
+      <div><div class="page-title">Company Wages</div><div class="page-sub">Rent, bills, vendors — other company costs</div></div>
+      <div class="topbar-actions">
+        <input type="month" id="wage-month" class="month-input" onchange="loadWages()">
+        <button class="btn btn-primary" onclick="toggleForm('wage')">+ Add entry</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-panel" id="form-wage">
+        <div class="form-grid">
+          <div class="field"><label>Title</label><input id="wage-title" placeholder="Office Rent"></div>
+          <div class="field"><label>Amount (₹)</label><input id="wage-amount" type="number" placeholder="30000"></div>
+          <div class="field"><label>Date</label><input id="wage-date" type="date"></div>
+          <div class="field"><label>Notes</label><input id="wage-notes" placeholder="Optional"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveWage()">Save entry</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleForm('wage')">Cancel</button>
+      </div>
+      <table>
+        <thead><tr><th>Title</th><th>Amount</th><th>Notes</th><th></th></tr></thead>
+        <tbody id="wages-body"><tr class="empty-row"><td colspan="4">Pick a month to see records</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ SUMMARY ============ -->
+  <div class="page" id="page-summary" style="display:none">
+    <div class="topbar">
+      <div><div class="page-title">Monthly Summary</div><div class="page-sub">Where the money went, this month</div></div>
+      <div class="topbar-actions">
+        <input type="month" id="summary-month" class="month-input" onchange="loadSummary()">
+        <button class="btn btn-pdf" onclick="downloadPdf()">⬇ Download PDF</button>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card salary"><div class="stat-label">Salary</div><div class="stat-value" id="sum-salary">₹0</div></div>
+      <div class="stat-card expense"><div class="stat-label">Employee Expense</div><div class="stat-value" id="sum-expense">₹0</div></div>
+      <div class="stat-card wages"><div class="stat-label">Company Wages</div><div class="stat-value" id="sum-wages">₹0</div></div>
+      <div class="stat-card total"><div class="stat-label">Grand Total</div><div class="stat-value" id="sum-total">₹0</div></div>
+    </div>
+
+    <div class="stub"><div class="stub-dot"></div><div class="stub-line"></div>Detach for your records<div class="stub-line"></div><div class="stub-dot"></div></div>
+
+    <div class="card">
+      <div class="card-head"><div class="card-title">Salary — this month</div></div>
+      <table><thead><tr><th>Employee</th><th>Amount</th><th>Status</th></tr></thead><tbody id="summary-salary-body"></tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">Employee Expenses — this month</div></div>
+      <table><thead><tr><th>Employee</th><th>Amount</th><th>Reason</th></tr></thead><tbody id="summary-expense-body"></tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">Company Wages — this month</div></div>
+      <table><thead><tr><th>Title</th><th>Amount</th><th>Notes</th></tr></thead><tbody id="summary-wages-body"></tbody></table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ---------- API Settings modal ---------- -->
+<div class="settings-modal-backdrop" id="settingsModal">
+  <div class="settings-modal">
+    <h3>Backend API URL</h3>
+    <p>Point this dashboard at your live FastAPI backend. This is saved in the page link, so bookmark the URL after connecting.</p>
+    <input id="settingsInput" placeholder="https://your-backend-url">
+    <div class="settings-modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveApiFromSettings()">Save &amp; reload</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ----------------------------------------------------------------
+// API_BASE resolution — works for live deployment, not just localhost.
+// Priority: ?api= URL query param  ->  same-origin guess  ->  localhost fallback
+// Saved by rewriting the page URL (no localStorage, so it works as a
+// plain static file anywhere and stays a shareable/bookmarkable link).
+// ----------------------------------------------------------------
+function resolveApiBase(){
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('api')) return params.get('api').replace(/\/$/, '');
+  // If this page is served from the same host as the API (reverse-proxied setup)
+  if(window.location.protocol.startsWith('http') && window.location.hostname !== '' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'){
+    return window.location.origin;
+  }
+  return "http://localhost:8000";
+}
+let API_BASE = resolveApiBase();
+let employeesCache = [];
+
+function openSettings(){
+  document.getElementById('settingsInput').value = API_BASE;
+  document.getElementById('settingsModal').classList.add('show');
+}
+function closeSettings(){ document.getElementById('settingsModal').classList.remove('show'); }
+
+function setApiBaseAndReload(url){
+  const clean = url.trim().replace(/\/$/, '');
+  if(!clean) return;
+  const params = new URLSearchParams(window.location.search);
+  params.set('api', clean);
+  window.location.search = params.toString();
+}
+function saveApiFromSettings(){ setApiBaseAndReload(document.getElementById('settingsInput').value); }
+function saveApiFromBanner(){ setApiBaseAndReload(document.getElementById('apiBannerInput').value); }
+
+// ---------- Navigation ----------
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+    item.classList.add('active');
+    document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+    document.getElementById('page-'+item.dataset.page).style.display='block';
+    if(item.dataset.page==='salary') loadSalary();
+    if(item.dataset.page==='expenses') loadExpenses();
+    if(item.dataset.page==='wages') loadWages();
+    if(item.dataset.page==='summary') loadSummary();
+  });
+});
+
+function toggleForm(id){ document.getElementById('form-'+id).classList.toggle('open'); }
+function currentMonth(){ return new Date().toISOString().slice(0,7); }
+function fmt(n){ return '₹' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:0}); }
+
+async function api(path, options={}){
+  const res = await fetch(API_BASE + path, { headers: {'Content-Type':'application/json'}, ...options });
+  if(!res.ok){ throw new Error(await res.text()); }
+  return res.json();
+}
+
+// ---------- Employees ----------
+async function loadEmployees(){
+  try{
+    employeesCache = await api('/employees/');
+    document.getElementById('apiStatus').textContent = 'connected';
+    document.getElementById('statusDot').className = 'status-dot ok';
+    document.getElementById('apiBanner').classList.remove('show');
+    const body = document.getElementById('employees-body');
+    if(employeesCache.length===0){ body.innerHTML = '<tr class="empty-row"><td colspan="6">No employees yet — add your first one above</td></tr>'; return; }
+    body.innerHTML = employeesCache.map(e=>`
+      <tr>
+        <td>${e.name}</td>
+        <td>${e.designation||'—'}</td>
+        <td class="amount">${fmt(e.salary)}</td>
+        <td>${e.contact||'—'}</td>
+        <td>${e.join_date||'—'}</td>
+        <td class="row-actions"><button class="btn btn-sm btn-danger" onclick="deleteEmployee(${e.id})">Delete</button></td>
+      </tr>`).join('');
+    populateEmployeeDropdowns();
+  }catch(err){
+    document.getElementById('apiStatus').textContent = 'offline';
+    document.getElementById('statusDot').className = 'status-dot bad';
+    document.getElementById('apiBanner').classList.add('show');
+    document.getElementById('apiBannerInput').value = API_BASE;
+    document.getElementById('employees-body').innerHTML = '<tr class="empty-row"><td colspan="6">Could not reach the API — set the correct URL above</td></tr>';
+  }
+}
+
+function populateEmployeeDropdowns(){
+  const opts = employeesCache.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  document.getElementById('sal-employee').innerHTML = opts;
+  document.getElementById('exp-employee').innerHTML = opts;
+}
+
+async function saveEmployee(){
+  const payload = {
+    name: document.getElementById('emp-name').value,
+    designation: document.getElementById('emp-designation').value || null,
+    salary: parseFloat(document.getElementById('emp-salary').value || 0),
+    contact: document.getElementById('emp-contact').value || null,
+    join_date: document.getElementById('emp-joindate').value || null,
+  };
+  if(!payload.name){ alert('Name is required'); return; }
+  await api('/employees/', {method:'POST', body:JSON.stringify(payload)});
+  toggleForm('emp');
+  ['emp-name','emp-designation','emp-salary','emp-contact','emp-joindate'].forEach(id=>document.getElementById(id).value='');
+  loadEmployees();
+}
+
+async function deleteEmployee(id){
+  if(!confirm('Delete this employee? Their salary/expense records will go too.')) return;
+  await api('/employees/'+id, {method:'DELETE'});
+  loadEmployees();
+}
+
+// ---------- Salary ----------
+async function loadSalary(){
+  const monthInput = document.getElementById('salary-month');
+  if(!monthInput.value) monthInput.value = currentMonth();
+  const month = monthInput.value;
+  const records = await api('/salary/?month='+month);
+  const body = document.getElementById('salary-body');
+  if(records.length===0){ body.innerHTML = '<tr class="empty-row"><td colspan="4">No salary records for this month yet</td></tr>'; return; }
+  body.innerHTML = records.map(r=>`
+    <tr>
+      <td>${employeeName(r.employee_id)}</td>
+      <td class="amount">${fmt(r.amount)}</td>
+      <td><span class="status-pill status-${r.status}">${r.status}</span></td>
+      <td class="row-actions"><button class="btn btn-sm btn-danger" onclick="deleteSalary(${r.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+function employeeName(id){
+  const e = employeesCache.find(x=>x.id===id);
+  return e ? e.name : ('Employee #'+id);
+}
+
+async function saveSalary(){
+  const payload = {
+    employee_id: parseInt(document.getElementById('sal-employee').value),
+    month: document.getElementById('salary-month').value || currentMonth(),
+    amount: parseFloat(document.getElementById('sal-amount').value || 0),
+    status: document.getElementById('sal-status').value,
+  };
+  if(!payload.employee_id){ alert('Add an employee first'); return; }
+  await api('/salary/', {method:'POST', body:JSON.stringify(payload)});
+  toggleForm('sal');
+  document.getElementById('sal-amount').value='';
+  loadSalary();
+}
+
+async function deleteSalary(id){
+  if(!confirm('Delete this salary record?')) return;
+  await api('/salary/'+id, {method:'DELETE'});
+  loadSalary();
+}
+
+// ---------- Employee Expenses ----------
+async function loadExpenses(){
+  const monthInput = document.getElementById('exp-month');
+  if(!monthInput.value) monthInput.value = currentMonth();
+  const month = monthInput.value;
+  const records = await api('/employee-expenses/?month='+month);
+  const body = document.getElementById('expenses-body');
+  if(records.length===0){ body.innerHTML = '<tr class="empty-row"><td colspan="5">No expenses for this month yet</td></tr>'; return; }
+  body.innerHTML = records.map(r=>`
+    <tr>
+      <td>${employeeName(r.employee_id)}</td>
+      <td class="amount">${fmt(r.amount)}</td>
+      <td>${r.reason||'—'}</td>
+      <td>${r.date||'—'}</td>
+      <td class="row-actions"><button class="btn btn-sm btn-danger" onclick="deleteExpense(${r.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+async function saveExpense(){
+  const payload = {
+    employee_id: parseInt(document.getElementById('exp-employee').value),
+    amount: parseFloat(document.getElementById('exp-amount').value || 0),
+    reason: document.getElementById('exp-reason').value || null,
+    month: document.getElementById('exp-month').value || currentMonth(),
+    date: document.getElementById('exp-date').value || null,
+  };
+  if(!payload.employee_id){ alert('Add an employee first'); return; }
+  await api('/employee-expenses/', {method:'POST', body:JSON.stringify(payload)});
+  toggleForm('exp');
+  ['exp-amount','exp-reason','exp-date'].forEach(id=>document.getElementById(id).value='');
+  loadExpenses();
+}
+
+async function deleteExpense(id){
+  if(!confirm('Delete this expense?')) return;
+  await api('/employee-expenses/'+id, {method:'DELETE'});
+  loadExpenses();
+}
+
+// ---------- Company Wages ----------
+async function loadWages(){
+  const monthInput = document.getElementById('wage-month');
+  if(!monthInput.value) monthInput.value = currentMonth();
+  const month = monthInput.value;
+  const records = await api('/company-wages/?month='+month);
+  const body = document.getElementById('wages-body');
+  if(records.length===0){ body.innerHTML = '<tr class="empty-row"><td colspan="4">No entries for this month yet</td></tr>'; return; }
+  body.innerHTML = records.map(r=>`
+    <tr>
+      <td>${r.title}</td>
+      <td class="amount">${fmt(r.amount)}</td>
+      <td>${r.notes||'—'}</td>
+      <td class="row-actions"><button class="btn btn-sm btn-danger" onclick="deleteWage(${r.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+async function saveWage(){
+  const payload = {
+    title: document.getElementById('wage-title').value,
+    amount: parseFloat(document.getElementById('wage-amount').value || 0),
+    month: document.getElementById('wage-month').value || currentMonth(),
+    date: document.getElementById('wage-date').value || null,
+    notes: document.getElementById('wage-notes').value || null,
+  };
+  if(!payload.title){ alert('Title is required'); return; }
+  await api('/company-wages/', {method:'POST', body:JSON.stringify(payload)});
+  toggleForm('wage');
+  ['wage-title','wage-amount','wage-date','wage-notes'].forEach(id=>document.getElementById(id).value='');
+  loadWages();
+}
+
+async function deleteWage(id){
+  if(!confirm('Delete this entry?')) return;
+  await api('/company-wages/'+id, {method:'DELETE'});
+  loadWages();
+}
+
+// ---------- Summary ----------
+async function loadSummary(){
+  const monthInput = document.getElementById('summary-month');
+  if(!monthInput.value) monthInput.value = currentMonth();
+  const month = monthInput.value;
+
+  const totals = await api('/summary/'+month);
+  document.getElementById('sum-salary').textContent = fmt(totals.total_salary);
+  document.getElementById('sum-expense').textContent = fmt(totals.total_employee_expense);
+  document.getElementById('sum-wages').textContent = fmt(totals.total_company_wages);
+  document.getElementById('sum-total').textContent = fmt(totals.grand_total);
+
+  const [salaryRecords, expenseRecords, wageRecords] = await Promise.all([
+    api('/salary/?month='+month),
+    api('/employee-expenses/?month='+month),
+    api('/company-wages/?month='+month),
+  ]);
+
+  document.getElementById('summary-salary-body').innerHTML = salaryRecords.length
+    ? salaryRecords.map(r=>`<tr><td>${employeeName(r.employee_id)}</td><td class="amount">${fmt(r.amount)}</td><td><span class="status-pill status-${r.status}">${r.status}</span></td></tr>`).join('')
+    : '<tr class="empty-row"><td colspan="3">No salary records this month</td></tr>';
+
+  document.getElementById('summary-expense-body').innerHTML = expenseRecords.length
+    ? expenseRecords.map(r=>`<tr><td>${employeeName(r.employee_id)}</td><td class="amount">${fmt(r.amount)}</td><td>${r.reason||'—'}</td></tr>`).join('')
+    : '<tr class="empty-row"><td colspan="3">No employee expenses this month</td></tr>';
+
+  document.getElementById('summary-wages-body').innerHTML = wageRecords.length
+    ? wageRecords.map(r=>`<tr><td>${r.title}</td><td class="amount">${fmt(r.amount)}</td><td>${r.notes||'—'}</td></tr>`).join('')
+    : '<tr class="empty-row"><td colspan="3">No company wage entries this month</td></tr>';
+}
+
+function downloadPdf(){
+  const month = document.getElementById('summary-month').value || currentMonth();
+  window.open(API_BASE + '/summary/' + month + '/report-pdf', '_blank');
+}
+
+// ---------- Init ----------
+loadEmployees();
+</script>
+</body>
+</html>
