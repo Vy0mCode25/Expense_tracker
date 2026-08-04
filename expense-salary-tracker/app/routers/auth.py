@@ -11,6 +11,6 @@ class LoginRequest(BaseModel):
 
 @router.post("/login")
 def login(payload: LoginRequest):
-    if payload.password != ADMIN_PASSWORD:
+    if payload.password.strip() != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Incorrect password")
     return {"ok": True}
