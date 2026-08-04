@@ -75,23 +75,27 @@
   .nav-item{
     display:flex;
     align-items:center;
-    gap:10px;
-    padding:11px 22px;
-    font-size:14.5px;
+    gap:11px;
+    margin:2px 12px;
+    padding:10px 12px;
+    font-size:14px;
     font-weight:500;
-    color:#AFC2D3;
+    color:#AFC2AE;
     cursor:pointer;
-    border-left:3px solid transparent;
+    border-radius:10px;
     transition:all .15s ease;
   }
-  .nav-item:hover{ background:var(--navy-soft); color:#fff; }
+  .nav-item:hover{ background:rgba(255,255,255,0.06); color:#fff; }
   .nav-item.active{
-    background:var(--navy-soft);
+    background:var(--teal);
     color:#fff;
-    border-left:3px solid var(--teal);
+    box-shadow:0 2px 8px rgba(62,120,82,0.35);
   }
-  .nav-num{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:#4A6A85; width:16px; }
-  .nav-item.active .nav-num{ color:var(--teal); }
+  .nav-icon{
+    width:18px; height:18px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .nav-icon svg{ width:17px; height:17px; }
 
   .sidebar-foot{
     margin-top:auto;
@@ -154,9 +158,10 @@
   .card{
     background:var(--card);
     border:1px solid var(--line);
-    border-radius:12px;
+    border-radius:16px;
     margin-bottom:22px;
     overflow:hidden;
+    box-shadow:0 1px 3px rgba(31,52,35,0.06);
   }
   .card-head{
     padding:16px 20px;
@@ -214,11 +219,22 @@
   .stat-card{
     background:var(--card);
     border:1px solid var(--line);
-    border-radius:12px;
+    border-radius:16px;
     padding:18px 20px;
     position:relative;
     overflow:hidden;
+    box-shadow:0 1px 3px rgba(31,52,35,0.06);
   }
+  .stat-icon{
+    width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:12px;
+  }
+  .stat-icon svg{ width:19px; height:19px; }
+  .stat-card.salary .stat-icon{ background:var(--teal-bg); color:var(--teal); }
+  .stat-card.expense .stat-icon{ background:var(--coral-bg); color:var(--coral); }
+  .stat-card.wages .stat-icon{ background:var(--sky-bg); color:var(--sky); }
+  .stat-card.total .stat-icon{ background:var(--teal-bg); color:var(--navy); }
   .stat-card::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:4px; }
   .stat-card.salary::before{ background:var(--teal); }
   .stat-card.expense::before{ background:var(--coral); }
@@ -314,13 +330,13 @@
   </div>
 
   <div class="nav-section-label">Manage</div>
-  <div class="nav-item active" data-page="employees"><span class="nav-num">01</span>Employees</div>
-  <div class="nav-item" data-page="salary"><span class="nav-num">02</span>Salary</div>
-  <div class="nav-item" data-page="expenses"><span class="nav-num">03</span>Employee Expenses</div>
-  <div class="nav-item" data-page="wages"><span class="nav-num">04</span>Company Wages</div>
+  <div class="nav-item active" data-page="employees"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Employees</div>
+  <div class="nav-item" data-page="salary"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Salary</div>
+  <div class="nav-item" data-page="expenses"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="11" x2="15" y2="11"/></svg></span>Employee Expenses</div>
+  <div class="nav-item" data-page="wages"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><line x1="9" y1="9" x2="9" y2="9.01"/><line x1="9" y1="12" x2="9" y2="12.01"/><line x1="9" y1="15" x2="9" y2="15.01"/><line x1="9" y1="18" x2="9" y2="18.01"/></svg></span>Company Wages</div>
   <div class="nav-section-label">Reports</div>
-  <div class="nav-item" data-page="profile"><span class="nav-num">05</span>Employee Profile</div>
-  <div class="nav-item" data-page="summary"><span class="nav-num">06</span>Monthly Summary</div>
+  <div class="nav-item" data-page="profile"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Employee Profile</div>
+  <div class="nav-item" data-page="summary"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Monthly Summary</div>
 
   <div class="sidebar-foot">
     <span><span class="status-dot" id="statusDot"></span><span id="apiStatus">checking…</span></span>
@@ -463,10 +479,10 @@
 
     <div id="profile-content" style="display:none">
       <div class="stat-row">
-        <div class="stat-card salary"><div class="stat-label">Salary Paid</div><div class="stat-value" id="profile-paid">₹0</div></div>
-        <div class="stat-card wages"><div class="stat-label">Salary Pending</div><div class="stat-value" id="profile-pending">₹0</div></div>
-        <div class="stat-card expense"><div class="stat-label">Total Expenses</div><div class="stat-value" id="profile-expenses">₹0</div></div>
-        <div class="stat-card total"><div class="stat-label">Total Paid Out</div><div class="stat-value" id="profile-total">₹0</div></div>
+        <div class="stat-card salary"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-label">Salary Paid</div><div class="stat-value" id="profile-paid">₹0</div></div>
+        <div class="stat-card wages"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-label">Salary Pending</div><div class="stat-value" id="profile-pending">₹0</div></div>
+        <div class="stat-card expense"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="stat-label">Total Expenses</div><div class="stat-value" id="profile-expenses">₹0</div></div>
+        <div class="stat-card total"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><div class="stat-label">Total Paid Out</div><div class="stat-value" id="profile-total">₹0</div></div>
       </div>
 
       <div class="card">
@@ -491,10 +507,10 @@
     </div>
 
     <div class="stat-row">
-      <div class="stat-card salary"><div class="stat-label">Salary</div><div class="stat-value" id="sum-salary">₹0</div></div>
-      <div class="stat-card expense"><div class="stat-label">Employee Expense</div><div class="stat-value" id="sum-expense">₹0</div></div>
-      <div class="stat-card wages"><div class="stat-label">Company Wages</div><div class="stat-value" id="sum-wages">₹0</div></div>
-      <div class="stat-card total"><div class="stat-label">Grand Total</div><div class="stat-value" id="sum-total">₹0</div></div>
+      <div class="stat-card salary"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="stat-label">Salary</div><div class="stat-value" id="sum-salary">₹0</div></div>
+      <div class="stat-card expense"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="stat-label">Employee Expense</div><div class="stat-value" id="sum-expense">₹0</div></div>
+      <div class="stat-card wages"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg></div><div class="stat-label">Company Wages</div><div class="stat-value" id="sum-wages">₹0</div></div>
+      <div class="stat-card total"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><div class="stat-label">Grand Total</div><div class="stat-value" id="sum-total">₹0</div></div>
     </div>
 
     <div class="stub"><div class="stub-dot"></div><div class="stub-line"></div>Detach for your records<div class="stub-line"></div><div class="stub-dot"></div></div>
@@ -535,14 +551,16 @@
 // Saved by rewriting the page URL (no localStorage, so it works as a
 // plain static file anywhere and stays a shareable/bookmarkable link).
 // ----------------------------------------------------------------
+// ----------------------------------------------------------------
+// API_BASE — permanently pointed at the live backend.
+// A ?api= URL override still works if you ever need to test against
+// a different backend (e.g. local dev), but there's no more guessing.
+// ----------------------------------------------------------------
+const LIVE_API_BASE = "https://ad-tech-expense-tracker-api.onrender.com";
 function resolveApiBase(){
   const params = new URLSearchParams(window.location.search);
   if(params.get('api')) return params.get('api').replace(/\/$/, '');
-  // If this page is served from the same host as the API (reverse-proxied setup)
-  if(window.location.protocol.startsWith('http') && window.location.hostname !== '' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'){
-    return window.location.origin;
-  }
-  return "http://localhost:8000";
+  return LIVE_API_BASE;
 }
 let API_BASE = resolveApiBase();
 let employeesCache = [];
