@@ -9,24 +9,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    /* Brand palette — pulled from the AD Tech Solution logo */
-    --teal:#2CA795;
-    --teal-bg:#E4F4F0;
-    --navy:#0B2A45;
-    --navy-soft:#153A5C;
-    --sky:#8FC5EF;
-    --sky-bg:#EAF4FC;
-    --ink-black:#161616;
+    /* Brand palette — Eco-Finance: forest, gold harvest, warm paper */
+    --teal:#3E7852;
+    --teal-bg:#E7F0E8;
+    --navy:#1F3423;
+    --navy-soft:#2D4A33;
+    --sky:#C9A227;
+    --sky-bg:#FAF2DC;
+    --ink-black:#1B2A1D;
     --amber:#B8860B;
-    --amber-bg:#FBF3E1;
-    --coral:#C0533E;
-    --coral-bg:#FBEAE6;
+    --amber-bg:#FAF3E1;
+    --coral:#B0603E;
+    --coral-bg:#F4E6DC;
 
-    --paper:#F3F7F9;
-    --card:#FFFFFF;
-    --line:#E1E8EC;
-    --muted:#66727C;
-    --text:#12202B;
+    --paper:#F6F4EC;
+    --card:#FFFEFA;
+    --line:#E2DCC9;
+    --muted:#6E7364;
+    --text:#20281E;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
@@ -295,6 +295,12 @@
     <input id="loginPassword" type="password" placeholder="Enter admin password" onkeydown="if(event.key==='Enter') doLogin()">
     <button class="btn btn-primary" onclick="doLogin()">Login</button>
     <div class="login-error" id="loginError"></div>
+    <div style="margin-top:16px; text-align:left;">
+      <div class="settings-link" onclick="toggleLoginApiField()" style="text-align:center;">Backend API URL settings</div>
+      <div id="loginApiField" style="display:none; margin-top:8px;">
+        <input id="loginApiUrl" placeholder="https://your-backend.onrender.com" style="text-align:left; font-family:'IBM Plex Mono', monospace; font-size:12px;">
+      </div>
+    </div>
   </div>
 </div>
 
@@ -552,21 +558,52 @@ function setCookie(name, value, days){
 }
 function clearCookie(name){ document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`; }
 
+function toggleLoginApiField(){
+  const field = document.getElementById('loginApiField');
+  const isOpen = field.style.display !== 'none';
+  field.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen) document.getElementById('loginApiUrl').value = API_BASE;
+}
+
+function initLoginScreen(){
+  document.getElementById('loginApiUrl').value = API_BASE;
+  // If the API base looks like it's guessing "same origin as this page" (common
+  // when frontend and backend are on different hosts, e.g. Netlify + Render),
+  // proactively show the field so the person notices and fixes it.
+  if(API_BASE === window.location.origin){
+    document.getElementById('loginApiField').style.display = 'block';
+  }
+}
+
 async function doLogin(){
   const pw = document.getElementById('loginPassword').value;
   const errEl = document.getElementById('loginError');
   errEl.textContent = '';
   if(!pw){ errEl.textContent = 'Enter the password'; return; }
+
+  const typedApi = document.getElementById('loginApiUrl').value.trim().replace(/\/$/, '');
+  if(typedApi) API_BASE = typedApi;
+
   try{
     const res = await fetch(API_BASE + '/auth/login', {
       method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: pw})
     });
+    if(res.status === 404){
+      errEl.textContent = 'Backend URL looks wrong (404) — check the API URL below';
+      document.getElementById('loginApiField').style.display = 'block';
+      return;
+    }
     if(!res.ok){ errEl.textContent = 'Incorrect password'; return; }
     adminPassword = pw;
     setCookie('ad_admin_pw', pw, 30);
+    // persist the working API URL in the page link too, without losing our login state
+    const params = new URLSearchParams(window.location.search);
+    params.set('api', API_BASE);
+    window.history.replaceState(null, '', '?' + params.toString());
     unlockDashboard();
   }catch(err){
-    errEl.textContent = 'Could not reach the server — check API settings';
+    errEl.textContent = 'Could not reach that URL — check the API URL below';
+    document.getElementById('loginApiField').style.display = 'block';
   }
 }
 
@@ -582,9 +619,11 @@ function doLogout(){
   document.body.classList.add('locked');
   document.getElementById('loginOverlay').style.display = 'flex';
   document.getElementById('loginPassword').value = '';
+  initLoginScreen();
 }
 
 async function tryAutoLogin(){
+  initLoginScreen();
   if(!adminPassword){ document.getElementById('loginOverlay').style.display = 'flex'; return; }
   try{
     const res = await fetch(API_BASE + '/auth/login', {
@@ -593,8 +632,9 @@ async function tryAutoLogin(){
     if(res.ok){ unlockDashboard(); }
     else{ doLogout(); }
   }catch(err){
-    // API unreachable — still unlock UI so the user can fix the API URL from settings
-    unlockDashboard();
+    // API unreachable — show login screen with the API field open so it can be fixed
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('loginApiField').style.display = 'block';
   }
 }
 
