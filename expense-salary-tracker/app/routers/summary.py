@@ -4,6 +4,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
+from app.core.auth import verify_admin
 from app import models, schemas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -11,7 +12,7 @@ from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-router = APIRouter(prefix="/summary", tags=["Summary"])
+router = APIRouter(prefix="/summary", tags=["Summary"], dependencies=[Depends(verify_admin)])
 
 
 def _get_monthly_totals(db: Session, month: str):
@@ -117,10 +118,11 @@ def monthly_report_pdf(month: str, db: Session = Depends(get_db)):
     # ---- Employee expense section ----
     elements.append(Paragraph("Employee Expenses", heading_style))
     if employee_expenses:
-        data = [["Employee", "Amount (Rs.)", "Reason"]]
+        data = [["Employee", "Amount (Rs.)", "Reason", "Receipt"]]
         for expense, emp_name in employee_expenses:
-            data.append([emp_name, f"{expense.amount:.2f}", expense.reason or "-"])
-        t = Table(data, colWidths=[7 * cm, 4 * cm, 4 * cm])
+            has_receipt = "Yes" if expense.receipt_base64 else "No"
+            data.append([emp_name, f"{expense.amount:.2f}", expense.reason or "-", has_receipt])
+        t = Table(data, colWidths=[5.5 * cm, 3.5 * cm, 4 * cm, 2 * cm])
         t.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4a5568")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),

@@ -264,9 +264,39 @@
   .settings-modal p{ font-size:12.5px; color:var(--muted); margin-bottom:14px; }
   .settings-modal input{ width:100%; margin-bottom:12px; }
   .settings-modal-actions{ display:flex; gap:10px; justify-content:flex-end; }
+
+  /* ---------- Login screen ---------- */
+  .login-overlay{
+    position:fixed; inset:0; z-index:200;
+    background:linear-gradient(160deg, var(--navy) 0%, #071B2D 100%);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .login-card{
+    background:#fff; border-radius:16px; padding:38px 34px 30px;
+    width:340px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.25);
+  }
+  .login-card img{ width:56px; height:56px; border-radius:10px; margin-bottom:14px; }
+  .login-card h2{ font-family:'Space Grotesk', sans-serif; font-size:19px; margin-bottom:2px; }
+  .login-card .sub{ font-size:12px; color:var(--sky); letter-spacing:0.4px; margin-bottom:22px; }
+  .login-card input{ width:100%; text-align:center; padding:11px; font-size:14px; margin-bottom:12px; }
+  .login-card button{ width:100%; padding:11px; font-size:14px; }
+  .login-error{ color:var(--coral); font-size:12.5px; margin-top:10px; min-height:16px; }
+
+  body.locked > .sidebar, body.locked > .main{ display:none; }
 </style>
 </head>
-<body>
+<body class="locked">
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <img src="assets/logo.png" alt="AD Tech Solution logo">
+    <h2>AD Tech Solution</h2>
+    <div class="sub">EXPENSE &amp; SALARY LEDGER</div>
+    <input id="loginPassword" type="password" placeholder="Enter admin password" onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="btn btn-primary" onclick="doLogin()">Login</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
 
 <div class="sidebar">
   <div class="brand">
@@ -283,11 +313,16 @@
   <div class="nav-item" data-page="expenses"><span class="nav-num">03</span>Employee Expenses</div>
   <div class="nav-item" data-page="wages"><span class="nav-num">04</span>Company Wages</div>
   <div class="nav-section-label">Reports</div>
-  <div class="nav-item" data-page="summary"><span class="nav-num">05</span>Monthly Summary</div>
+  <div class="nav-item" data-page="profile"><span class="nav-num">05</span>Employee Profile</div>
+  <div class="nav-item" data-page="summary"><span class="nav-num">06</span>Monthly Summary</div>
 
   <div class="sidebar-foot">
     <span><span class="status-dot" id="statusDot"></span><span id="apiStatus">checking…</span></span>
     <span class="settings-link" onclick="openSettings()">API settings</span>
+  </div>
+  <div class="sidebar-foot" style="border-top:none; padding-top:8px;">
+    <span></span>
+    <span class="settings-link" onclick="doLogout()">Logout</span>
   </div>
 </div>
 
@@ -367,13 +402,15 @@
           <div class="field"><label>Amount (₹)</label><input id="exp-amount" type="number" placeholder="2000"></div>
           <div class="field"><label>Reason</label><input id="exp-reason" placeholder="Travel reimbursement"></div>
           <div class="field"><label>Date</label><input id="exp-date" type="date"></div>
+          <div class="field"><label>Bill / receipt photo</label><input id="exp-receipt" type="file" accept="image/*" onchange="previewReceipt(this)"></div>
         </div>
+        <img id="exp-receipt-preview" style="display:none; max-height:80px; border-radius:6px; margin-bottom:12px; border:1px solid var(--line);">
         <button class="btn btn-primary btn-sm" onclick="saveExpense()">Save expense</button>
         <button class="btn btn-ghost btn-sm" onclick="toggleForm('exp')">Cancel</button>
       </div>
       <table>
-        <thead><tr><th>Employee</th><th>Amount</th><th>Reason</th><th>Date</th><th></th></tr></thead>
-        <tbody id="expenses-body"><tr class="empty-row"><td colspan="5">Pick a month to see records</td></tr></tbody>
+        <thead><tr><th>Employee</th><th>Amount</th><th>Reason</th><th>Date</th><th>Receipt</th><th></th></tr></thead>
+        <tbody id="expenses-body"><tr class="empty-row"><td colspan="6">Pick a month to see records</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -405,6 +442,38 @@
     </div>
   </div>
 
+  <!-- ============ EMPLOYEE PROFILE ============ -->
+  <div class="page" id="page-profile" style="display:none">
+    <div class="topbar">
+      <div><div class="page-title">Employee Profile</div><div class="page-sub">Salary and expenses for one employee, all-time</div></div>
+      <div class="topbar-actions">
+        <select id="profile-employee" onchange="loadProfile()" style="min-width:200px;"></select>
+      </div>
+    </div>
+
+    <div id="profile-empty" class="card" style="padding:34px 20px; text-align:center; color:var(--muted); font-size:13.5px;">
+      Select an employee above to see their complete record
+    </div>
+
+    <div id="profile-content" style="display:none">
+      <div class="stat-row">
+        <div class="stat-card salary"><div class="stat-label">Salary Paid</div><div class="stat-value" id="profile-paid">₹0</div></div>
+        <div class="stat-card wages"><div class="stat-label">Salary Pending</div><div class="stat-value" id="profile-pending">₹0</div></div>
+        <div class="stat-card expense"><div class="stat-label">Total Expenses</div><div class="stat-value" id="profile-expenses">₹0</div></div>
+        <div class="stat-card total"><div class="stat-label">Total Paid Out</div><div class="stat-value" id="profile-total">₹0</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Salary history</div></div>
+        <table><thead><tr><th>Month</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody id="profile-salary-body"></tbody></table>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Expense history</div></div>
+        <table><thead><tr><th>Month</th><th>Amount</th><th>Reason</th><th>Receipt</th></tr></thead><tbody id="profile-expense-body"></tbody></table>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ SUMMARY ============ -->
   <div class="page" id="page-summary" style="display:none">
     <div class="topbar">
@@ -430,7 +499,7 @@
     </div>
     <div class="card">
       <div class="card-head"><div class="card-title">Employee Expenses — this month</div></div>
-      <table><thead><tr><th>Employee</th><th>Amount</th><th>Reason</th></tr></thead><tbody id="summary-expense-body"></tbody></table>
+      <table><thead><tr><th>Employee</th><th>Amount</th><th>Reason</th><th>Receipt</th></tr></thead><tbody id="summary-expense-body"></tbody></table>
     </div>
     <div class="card">
       <div class="card-head"><div class="card-title">Company Wages — this month</div></div>
@@ -471,6 +540,76 @@ function resolveApiBase(){
 }
 let API_BASE = resolveApiBase();
 let employeesCache = [];
+let adminPassword = getCookie('ad_admin_pw');
+
+function getCookie(name){
+  const match = document.cookie.match(new RegExp('(^| )'+name+'=([^;]+)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+function setCookie(name, value, days){
+  const expires = new Date(Date.now() + days*24*60*60*1000).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+}
+function clearCookie(name){ document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`; }
+
+async function doLogin(){
+  const pw = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  if(!pw){ errEl.textContent = 'Enter the password'; return; }
+  try{
+    const res = await fetch(API_BASE + '/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: pw})
+    });
+    if(!res.ok){ errEl.textContent = 'Incorrect password'; return; }
+    adminPassword = pw;
+    setCookie('ad_admin_pw', pw, 30);
+    unlockDashboard();
+  }catch(err){
+    errEl.textContent = 'Could not reach the server — check API settings';
+  }
+}
+
+function unlockDashboard(){
+  document.body.classList.remove('locked');
+  document.getElementById('loginOverlay').style.display = 'none';
+  loadEmployees();
+}
+
+function doLogout(){
+  clearCookie('ad_admin_pw');
+  adminPassword = null;
+  document.body.classList.add('locked');
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('loginPassword').value = '';
+}
+
+async function tryAutoLogin(){
+  if(!adminPassword){ document.getElementById('loginOverlay').style.display = 'flex'; return; }
+  try{
+    const res = await fetch(API_BASE + '/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: adminPassword})
+    });
+    if(res.ok){ unlockDashboard(); }
+    else{ doLogout(); }
+  }catch(err){
+    // API unreachable — still unlock UI so the user can fix the API URL from settings
+    unlockDashboard();
+  }
+}
+
+function previewReceipt(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('exp-receipt-preview');
+    img.src = e.target.result;
+    img.style.display = 'inline-block';
+    img.dataset.base64 = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 
 function openSettings(){
   document.getElementById('settingsInput').value = API_BASE;
@@ -498,6 +637,7 @@ document.querySelectorAll('.nav-item').forEach(item=>{
     if(item.dataset.page==='salary') loadSalary();
     if(item.dataset.page==='expenses') loadExpenses();
     if(item.dataset.page==='wages') loadWages();
+    if(item.dataset.page==='profile') initProfilePage();
     if(item.dataset.page==='summary') loadSummary();
   });
 });
@@ -507,7 +647,11 @@ function currentMonth(){ return new Date().toISOString().slice(0,7); }
 function fmt(n){ return '₹' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:0}); }
 
 async function api(path, options={}){
-  const res = await fetch(API_BASE + path, { headers: {'Content-Type':'application/json'}, ...options });
+  const res = await fetch(API_BASE + path, {
+    headers: {'Content-Type':'application/json', 'X-Admin-Password': adminPassword || ''},
+    ...options
+  });
+  if(res.status === 401){ doLogout(); throw new Error('Session expired, please login again'); }
   if(!res.ok){ throw new Error(await res.text()); }
   return res.json();
 }
@@ -580,8 +724,31 @@ async function loadSalary(){
       <td>${employeeName(r.employee_id)}</td>
       <td class="amount">${fmt(r.amount)}</td>
       <td><span class="status-pill status-${r.status}">${r.status}</span></td>
-      <td class="row-actions"><button class="btn btn-sm btn-danger" onclick="deleteSalary(${r.id})">Delete</button></td>
+      <td class="row-actions">
+        ${r.status==='pending' ? `<button class="btn btn-sm" style="background:var(--teal-bg); color:var(--teal);" onclick="markPaid(${r.id})">Mark Paid</button>` : `<button class="btn btn-sm btn-ghost" onclick="downloadSlip(${r.id})">Slip PDF</button>`}
+        <button class="btn btn-sm btn-danger" onclick="deleteSalary(${r.id})">Delete</button>
+      </td>
     </tr>`).join('');
+}
+
+async function downloadSlip(id){
+  const res = await fetch(API_BASE + '/salary/' + id + '/slip-pdf', {
+    headers: {'X-Admin-Password': adminPassword || ''}
+  });
+  if(res.status === 401){ doLogout(); return; }
+  if(!res.ok){ alert('Could not generate slip'); return; }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'salary_slip.pdf';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function markPaid(id){
+  await api(`/salary/${id}/status?status=paid`, {method:'PATCH'});
+  loadSalary();
 }
 
 function employeeName(id){
@@ -623,22 +790,33 @@ async function loadExpenses(){
       <td class="amount">${fmt(r.amount)}</td>
       <td>${r.reason||'—'}</td>
       <td>${r.date||'—'}</td>
+      <td>${receiptCell(r.receipt_base64)}</td>
       <td class="row-actions"><button class="btn btn-sm btn-danger" onclick="deleteExpense(${r.id})">Delete</button></td>
     </tr>`).join('');
 }
 
+function receiptCell(base64){
+  if(!base64) return '<span style="color:var(--muted)">—</span>';
+  return `<img src="${base64}" onclick="window.open(this.src)" style="width:34px; height:34px; object-fit:cover; border-radius:5px; cursor:pointer; border:1px solid var(--line);" title="Click to view full size">`;
+}
+
 async function saveExpense(){
+  const previewImg = document.getElementById('exp-receipt-preview');
   const payload = {
     employee_id: parseInt(document.getElementById('exp-employee').value),
     amount: parseFloat(document.getElementById('exp-amount').value || 0),
     reason: document.getElementById('exp-reason').value || null,
     month: document.getElementById('exp-month').value || currentMonth(),
     date: document.getElementById('exp-date').value || null,
+    receipt_base64: previewImg.dataset.base64 || null,
   };
   if(!payload.employee_id){ alert('Add an employee first'); return; }
   await api('/employee-expenses/', {method:'POST', body:JSON.stringify(payload)});
   toggleForm('exp');
   ['exp-amount','exp-reason','exp-date'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('exp-receipt').value = '';
+  previewImg.style.display = 'none';
+  previewImg.removeAttribute('data-base64');
   loadExpenses();
 }
 
@@ -686,6 +864,56 @@ async function deleteWage(id){
   loadWages();
 }
 
+// ---------- Employee Profile ----------
+function initProfilePage(){
+  const sel = document.getElementById('profile-employee');
+  sel.innerHTML = '<option value="">Select employee…</option>' + employeesCache.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+}
+
+async function loadProfile(){
+  const id = document.getElementById('profile-employee').value;
+  if(!id){
+    document.getElementById('profile-empty').style.display = 'block';
+    document.getElementById('profile-content').style.display = 'none';
+    return;
+  }
+  document.getElementById('profile-empty').style.display = 'none';
+  document.getElementById('profile-content').style.display = 'block';
+
+  const [salaryRecords, expenseRecords] = await Promise.all([
+    api('/salary/?employee_id='+id),
+    api('/employee-expenses/?employee_id='+id),
+  ]);
+
+  const paid = salaryRecords.filter(r=>r.status==='paid').reduce((s,r)=>s+r.amount,0);
+  const pending = salaryRecords.filter(r=>r.status==='pending').reduce((s,r)=>s+r.amount,0);
+  const totalExpense = expenseRecords.reduce((s,r)=>s+r.amount,0);
+
+  document.getElementById('profile-paid').textContent = fmt(paid);
+  document.getElementById('profile-pending').textContent = fmt(pending);
+  document.getElementById('profile-expenses').textContent = fmt(totalExpense);
+  document.getElementById('profile-total').textContent = fmt(paid + totalExpense);
+
+  document.getElementById('profile-salary-body').innerHTML = salaryRecords.length
+    ? salaryRecords.map(r=>`
+        <tr>
+          <td>${r.month}</td>
+          <td class="amount">${fmt(r.amount)}</td>
+          <td><span class="status-pill status-${r.status}">${r.status}</span></td>
+          <td>${r.status==='pending' ? `<button class="btn btn-sm" style="background:var(--teal-bg); color:var(--teal);" onclick="markPaidFromProfile(${r.id})">Mark Paid</button>` : `<button class="btn btn-sm btn-ghost" onclick="downloadSlip(${r.id})">Slip PDF</button>`}</td>
+        </tr>`).join('')
+    : '<tr class="empty-row"><td colspan="4">No salary records yet</td></tr>';
+
+  document.getElementById('profile-expense-body').innerHTML = expenseRecords.length
+    ? expenseRecords.map(r=>`<tr><td>${r.month}</td><td class="amount">${fmt(r.amount)}</td><td>${r.reason||'—'}</td><td>${receiptCell(r.receipt_base64)}</td></tr>`).join('')
+    : '<tr class="empty-row"><td colspan="4">No expense records yet</td></tr>';
+}
+
+async function markPaidFromProfile(id){
+  await api(`/salary/${id}/status?status=paid`, {method:'PATCH'});
+  loadProfile();
+}
+
 // ---------- Summary ----------
 async function loadSummary(){
   const monthInput = document.getElementById('summary-month');
@@ -709,21 +937,32 @@ async function loadSummary(){
     : '<tr class="empty-row"><td colspan="3">No salary records this month</td></tr>';
 
   document.getElementById('summary-expense-body').innerHTML = expenseRecords.length
-    ? expenseRecords.map(r=>`<tr><td>${employeeName(r.employee_id)}</td><td class="amount">${fmt(r.amount)}</td><td>${r.reason||'—'}</td></tr>`).join('')
-    : '<tr class="empty-row"><td colspan="3">No employee expenses this month</td></tr>';
+    ? expenseRecords.map(r=>`<tr><td>${employeeName(r.employee_id)}</td><td class="amount">${fmt(r.amount)}</td><td>${r.reason||'—'}</td><td>${receiptCell(r.receipt_base64)}</td></tr>`).join('')
+    : '<tr class="empty-row"><td colspan="4">No employee expenses this month</td></tr>';
 
   document.getElementById('summary-wages-body').innerHTML = wageRecords.length
     ? wageRecords.map(r=>`<tr><td>${r.title}</td><td class="amount">${fmt(r.amount)}</td><td>${r.notes||'—'}</td></tr>`).join('')
     : '<tr class="empty-row"><td colspan="3">No company wage entries this month</td></tr>';
 }
 
-function downloadPdf(){
+async function downloadPdf(){
   const month = document.getElementById('summary-month').value || currentMonth();
-  window.open(API_BASE + '/summary/' + month + '/report-pdf', '_blank');
+  const res = await fetch(API_BASE + '/summary/' + month + '/report-pdf', {
+    headers: {'X-Admin-Password': adminPassword || ''}
+  });
+  if(res.status === 401){ doLogout(); return; }
+  if(!res.ok){ alert('Could not generate report'); return; }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `company_expense_report_${month}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ---------- Init ----------
-loadEmployees();
+tryAutoLogin();
 </script>
 </body>
 </html>

@@ -1,17 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.core.auth import verify_admin
 from app import models, schemas
 
-router = APIRouter(prefix="/employee-expenses", tags=["Employee Expenses"])
+router = APIRouter(prefix="/employee-expenses", tags=["Employee Expenses"], dependencies=[Depends(verify_admin)])
 
 
 @router.get("/", response_model=list[schemas.EmployeeExpenseOut])
-def list_employee_expenses(month: str | None = None, db: Session = Depends(get_db)):
+def list_employee_expenses(month: str | None = None, employee_id: int | None = None, db: Session = Depends(get_db)):
     query = db.query(models.EmployeeExpense)
     if month:
         query = query.filter(models.EmployeeExpense.month == month)
-    return query.all()
+    if employee_id:
+        query = query.filter(models.EmployeeExpense.employee_id == employee_id)
+    return query.order_by(models.EmployeeExpense.month.desc()).all()
 
 
 @router.post("/", response_model=schemas.EmployeeExpenseOut)

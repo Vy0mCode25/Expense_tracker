@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.core.auth import verify_admin
 from app import models, schemas
 
-router = APIRouter(prefix="/company-wages", tags=["Company Wages"])
+router = APIRouter(prefix="/company-wages", tags=["Company Wages"], dependencies=[Depends(verify_admin)])
 
 
 @router.get("/", response_model=list[schemas.CompanyWageOut])

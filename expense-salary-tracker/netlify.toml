@@ -1,0 +1,4 @@
+[build]
+  base = "expense-salary-tracker/frontend"
+  publish = "."
+  command = "echo 'Static site, no build needed'"

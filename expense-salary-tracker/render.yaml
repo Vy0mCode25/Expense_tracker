@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ad-tech-expense-tracker-api
+    runtime: python
+    plan: free
+    branch: main
+    rootDir: expense-salary-tracker
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
+    envVars:
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.12.7

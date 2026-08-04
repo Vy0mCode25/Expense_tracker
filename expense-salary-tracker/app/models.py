@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -38,6 +38,7 @@ class EmployeeExpense(Base):
     reason = Column(String, nullable=True)
     month = Column(String, nullable=False)  # format: "2026-08"
     date = Column(Date, nullable=True)
+    receipt_base64 = Column(Text, nullable=True)  # bill/receipt photo, stored as base64 data URL
 
     employee = relationship("Employee", back_populates="expenses")
 
