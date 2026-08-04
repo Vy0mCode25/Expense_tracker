@@ -311,12 +311,7 @@
     <input id="loginPassword" type="password" placeholder="Enter admin password" onkeydown="if(event.key==='Enter') doLogin()">
     <button class="btn btn-primary" onclick="doLogin()">Login</button>
     <div class="login-error" id="loginError"></div>
-    <div style="margin-top:16px; text-align:left;">
-      <div class="settings-link" onclick="toggleLoginApiField()" style="text-align:center;">Backend API URL settings</div>
-      <div id="loginApiField" style="display:none; margin-top:8px;">
-        <input id="loginApiUrl" placeholder="https://your-backend.onrender.com" style="text-align:left; font-family:'IBM Plex Mono', monospace; font-size:12px;">
-      </div>
-    </div>
+    <input id="loginApiUrl" type="hidden">
   </div>
 </div>
 
@@ -340,7 +335,6 @@
 
   <div class="sidebar-foot">
     <span><span class="status-dot" id="statusDot"></span><span id="apiStatus">checking…</span></span>
-    <span class="settings-link" onclick="openSettings()">API settings</span>
   </div>
   <div class="sidebar-foot" style="border-top:none; padding-top:8px;">
     <span></span>
@@ -351,9 +345,8 @@
 <div class="main">
 
   <div class="api-banner" id="apiBanner">
-    <span>⚠ Can't reach the backend API. Set the correct API URL:</span>
-    <input id="apiBannerInput" placeholder="https://your-backend-url">
-    <button class="btn btn-primary btn-sm" onclick="saveApiFromBanner()">Connect</button>
+    <span>⚠ Can't reach the server right now. If it's been idle a while it may be waking up — this can take up to a minute.</span>
+    <button class="btn btn-primary btn-sm" onclick="loadEmployees()">Retry</button>
   </div>
 
   <!-- ============ EMPLOYEES ============ -->
@@ -361,6 +354,11 @@
     <div class="topbar">
       <div><div class="page-title">Employees</div><div class="page-sub">Everyone on the payroll, in one place</div></div>
       <button class="btn btn-primary" onclick="toggleForm('emp')">+ Add employee</button>
+    </div>
+
+    <div class="stat-row" style="grid-template-columns:repeat(2,1fr); margin-bottom:22px;">
+      <div class="stat-card salary"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="stat-label">Total Employees</div><div class="stat-value" id="emp-count">0</div></div>
+      <div class="stat-card total"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="stat-label">Total Monthly Payroll</div><div class="stat-value" id="emp-payroll">₹0</div></div>
     </div>
 
     <div class="card">
@@ -531,19 +529,6 @@
 
 </div>
 
-<!-- ---------- API Settings modal ---------- -->
-<div class="settings-modal-backdrop" id="settingsModal">
-  <div class="settings-modal">
-    <h3>Backend API URL</h3>
-    <p>Point this dashboard at your live FastAPI backend. This is saved in the page link, so bookmark the URL after connecting.</p>
-    <input id="settingsInput" placeholder="https://your-backend-url">
-    <div class="settings-modal-actions">
-      <button class="btn btn-ghost btn-sm" onclick="closeSettings()">Cancel</button>
-      <button class="btn btn-primary btn-sm" onclick="saveApiFromSettings()">Save &amp; reload</button>
-    </div>
-  </div>
-</div>
-
 <script>
 // ----------------------------------------------------------------
 // API_BASE resolution — works for live deployment, not just localhost.
@@ -576,21 +561,8 @@ function setCookie(name, value, days){
 }
 function clearCookie(name){ document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`; }
 
-function toggleLoginApiField(){
-  const field = document.getElementById('loginApiField');
-  const isOpen = field.style.display !== 'none';
-  field.style.display = isOpen ? 'none' : 'block';
-  if(!isOpen) document.getElementById('loginApiUrl').value = API_BASE;
-}
-
 function initLoginScreen(){
-  document.getElementById('loginApiUrl').value = API_BASE;
-  // If the API base looks like it's guessing "same origin as this page" (common
-  // when frontend and backend are on different hosts, e.g. Netlify + Render),
-  // proactively show the field so the person notices and fixes it.
-  if(API_BASE === window.location.origin){
-    document.getElementById('loginApiField').style.display = 'block';
-  }
+  // API URL is hardcoded now — nothing to initialize.
 }
 
 async function doLogin(){
@@ -599,29 +571,16 @@ async function doLogin(){
   errEl.textContent = '';
   if(!pw){ errEl.textContent = 'Enter the password'; return; }
 
-  const typedApi = document.getElementById('loginApiUrl').value.trim().replace(/\/$/, '');
-  if(typedApi) API_BASE = typedApi;
-
   try{
     const res = await fetch(API_BASE + '/auth/login', {
       method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: pw})
     });
-    if(res.status === 404){
-      errEl.textContent = 'Backend URL looks wrong (404) — check the API URL below';
-      document.getElementById('loginApiField').style.display = 'block';
-      return;
-    }
     if(!res.ok){ errEl.textContent = 'Incorrect password'; return; }
     adminPassword = pw;
     setCookie('ad_admin_pw', pw, 30);
-    // persist the working API URL in the page link too, without losing our login state
-    const params = new URLSearchParams(window.location.search);
-    params.set('api', API_BASE);
-    window.history.replaceState(null, '', '?' + params.toString());
     unlockDashboard();
   }catch(err){
-    errEl.textContent = 'Could not reach that URL — check the API URL below';
-    document.getElementById('loginApiField').style.display = 'block';
+    errEl.textContent = 'Could not reach the server. Please try again in a moment.';
   }
 }
 
@@ -637,11 +596,9 @@ function doLogout(){
   document.body.classList.add('locked');
   document.getElementById('loginOverlay').style.display = 'flex';
   document.getElementById('loginPassword').value = '';
-  initLoginScreen();
 }
 
 async function tryAutoLogin(){
-  initLoginScreen();
   if(!adminPassword){ document.getElementById('loginOverlay').style.display = 'flex'; return; }
   try{
     const res = await fetch(API_BASE + '/auth/login', {
@@ -650,9 +607,7 @@ async function tryAutoLogin(){
     if(res.ok){ unlockDashboard(); }
     else{ doLogout(); }
   }catch(err){
-    // API unreachable — show login screen with the API field open so it can be fixed
     document.getElementById('loginOverlay').style.display = 'flex';
-    document.getElementById('loginApiField').style.display = 'block';
   }
 }
 
@@ -668,22 +623,6 @@ function previewReceipt(input){
   };
   reader.readAsDataURL(file);
 }
-
-function openSettings(){
-  document.getElementById('settingsInput').value = API_BASE;
-  document.getElementById('settingsModal').classList.add('show');
-}
-function closeSettings(){ document.getElementById('settingsModal').classList.remove('show'); }
-
-function setApiBaseAndReload(url){
-  const clean = url.trim().replace(/\/$/, '');
-  if(!clean) return;
-  const params = new URLSearchParams(window.location.search);
-  params.set('api', clean);
-  window.location.search = params.toString();
-}
-function saveApiFromSettings(){ setApiBaseAndReload(document.getElementById('settingsInput').value); }
-function saveApiFromBanner(){ setApiBaseAndReload(document.getElementById('apiBannerInput').value); }
 
 // ---------- Navigation ----------
 document.querySelectorAll('.nav-item').forEach(item=>{
@@ -721,6 +660,8 @@ async function loadEmployees(){
     document.getElementById('apiStatus').textContent = 'connected';
     document.getElementById('statusDot').className = 'status-dot ok';
     document.getElementById('apiBanner').classList.remove('show');
+    document.getElementById('emp-count').textContent = employeesCache.length;
+    document.getElementById('emp-payroll').textContent = fmt(employeesCache.reduce((s,e)=>s+e.salary,0));
     const body = document.getElementById('employees-body');
     if(employeesCache.length===0){ body.innerHTML = '<tr class="empty-row"><td colspan="6">No employees yet — add your first one above</td></tr>'; return; }
     body.innerHTML = employeesCache.map(e=>`
