@@ -1,14 +1,28 @@
-import os
-from fastapi import Header, HTTPException
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from app.core.auth import ADMIN_PASSWORD
 
-# Set this via environment variable in production (Render dashboard -> Environment).
-# Falls back to a default for local dev only.
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123").strip()
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-def verify_admin(x_admin_password: str = Header(None)):
-    """Every protected route requires this header: X-Admin-Password: <password>"""
-    provided = (x_admin_password or "").strip()
-    if not provided or provided != ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="Invalid or missing password")
-    return True
+class LoginRequest(BaseModel):
+    password: str
+
+
+@router.post("/login")
+def login(payload: LoginRequest):
+    if payload.password.strip() != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Incorrect password")
+    return {"ok": True}
+
+
+# TEMPORARY diagnostic route — remove after debugging.
+# Does NOT reveal the password, only its length and first/last character,
+# so we can check if Render's env var is set correctly without exposing it.
+@router.get("/debug-password-check")
+def debug_password_check():
+    return {
+        "server_password_length": len(ADMIN_PASSWORD),
+        "server_password_first_char": ADMIN_PASSWORD[0] if ADMIN_PASSWORD else None,
+        "server_password_last_char": ADMIN_PASSWORD[-1] if ADMIN_PASSWORD else None,
+    }
