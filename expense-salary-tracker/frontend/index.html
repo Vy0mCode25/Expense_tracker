@@ -31,10 +31,28 @@
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
     font-family:'Inter', sans-serif;
-    background:var(--paper);
+    background:
+      radial-gradient(circle at 8% 15%, rgba(62,120,82,0.05) 0%, transparent 40%),
+      radial-gradient(circle at 92% 85%, rgba(201,162,39,0.05) 0%, transparent 40%),
+      var(--paper);
     color:var(--text);
     display:flex;
     min-height:100vh;
+  }
+  .main{
+    background-image:
+      radial-gradient(circle at 100% 0%, rgba(62,120,82,0.06) 0%, transparent 45%),
+      radial-gradient(circle at 0% 100%, rgba(201,162,39,0.06) 0%, transparent 40%);
+    background-attachment:fixed;
+    position:relative;
+  }
+  .leaf-watermark{
+    position:fixed;
+    bottom:-30px; right:-20px;
+    width:220px; height:220px;
+    opacity:0.05;
+    pointer-events:none;
+    z-index:-1;
   }
   ::selection{ background: var(--teal-bg); color: var(--teal); }
 
@@ -98,7 +116,6 @@
   .nav-icon svg{ width:17px; height:17px; }
 
   .sidebar-foot{
-    margin-top:auto;
     padding:16px 22px 0;
     font-size:11px;
     color:#4A6A85;
@@ -107,6 +124,30 @@
     align-items:center;
     justify-content:space-between;
   }
+  .growth-panel{
+    margin:auto 16px 16px;
+    padding:18px 16px;
+    border-radius:14px;
+    background:linear-gradient(160deg, #2A4531 0%, #1A2E1F 100%);
+    border:1px solid rgba(255,255,255,0.08);
+    position:relative;
+    overflow:hidden;
+  }
+  .growth-panel::after{
+    content:'';
+    position:absolute; right:-18px; bottom:-18px;
+    width:90px; height:90px; border-radius:50%;
+    background:radial-gradient(circle, rgba(201,162,39,0.18) 0%, transparent 70%);
+  }
+  .growth-icon{
+    width:34px; height:34px; border-radius:50%;
+    background:rgba(201,162,39,0.18);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:10px; color:var(--sky);
+  }
+  .growth-icon svg{ width:17px; height:17px; }
+  .growth-panel .g-title{ color:#fff; font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:13.5px; margin-bottom:4px; }
+  .growth-panel .g-sub{ color:#A9BFA9; font-size:11px; line-height:1.5; position:relative; z-index:1; }
   .status-dot{ width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:6px; background:#5E7791; }
   .status-dot.ok{ background:var(--teal); }
   .status-dot.bad{ background:var(--coral); }
@@ -180,7 +221,7 @@
     color:var(--muted);
     font-weight:600;
     padding:12px 20px;
-    background:#F8FBFC;
+    background:var(--teal-bg);
     border-bottom:1px solid var(--line);
   }
   td{
@@ -206,7 +247,7 @@
   .form-panel{
     display:none;
     padding:18px 20px;
-    background:#F8FBFC;
+    background:var(--teal-bg);
     border-bottom:1px solid var(--line);
   }
   .form-panel.open{ display:block; }
@@ -333,6 +374,12 @@
   <div class="nav-item" data-page="profile"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Employee Profile</div>
   <div class="nav-item" data-page="summary"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Monthly Summary</div>
 
+  <div class="growth-panel">
+    <div class="growth-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
+    <div class="g-title">Steady Growth</div>
+    <div class="g-sub">Every recorded rupee is a step toward a clearer, healthier books. Small habits, tracked well, compound.</div>
+  </div>
+
   <div class="sidebar-foot">
     <span><span class="status-dot" id="statusDot"></span><span id="apiStatus">checking…</span></span>
   </div>
@@ -343,6 +390,10 @@
 </div>
 
 <div class="main">
+
+  <svg class="leaf-watermark" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M100 10C60 10 20 50 20 110C20 160 60 190 100 190C90 150 90 100 130 60C160 30 180 20 190 15C160 10 130 10 100 10Z" fill="#3E7852"/>
+  </svg>
 
   <div class="api-banner" id="apiBanner">
     <span>⚠ Can't reach the server right now. If it's been idle a while it may be waking up — this can take up to a minute.</span>
