@@ -1,3 +1,7 @@
+databases:
+  - name: ad-tech-expense-tracker-db
+    plan: free
+
 services:
   - type: web
     name: ad-tech-expense-tracker-api
@@ -13,3 +17,17 @@ services:
         sync: false
       - key: PYTHON_VERSION
         value: 3.12.7
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ad-tech-expense-tracker-db
+          property: connectionString
+
+  - type: web
+    name: ad-tech-expense-tracker-frontend
+    runtime: static
+    plan: free
+    branch: main
+    rootDir: expense-salary-tracker/frontend
+    buildCommand: "echo 'static site, no build needed'"
+    staticPublishPath: .
+    autoDeploy: true
