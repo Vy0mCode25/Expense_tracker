@@ -1,7 +1,3 @@
-databases:
-  - name: ad-tech-expense-tracker-db
-    plan: free
-
 services:
   - type: web
     name: ad-tech-expense-tracker-api
@@ -17,10 +13,12 @@ services:
         sync: false
       - key: PYTHON_VERSION
         value: 3.12.7
-      - key: DATABASE_URL
-        fromDatabase:
-          name: ad-tech-expense-tracker-db
-          property: connectionString
+      - key: postgresql://neondb_owner:npg_ezHjr5dm2END@ep-young-unit-ax3pqb2q-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+        sync: false
+        # Set this manually in the Render dashboard -> Environment tab.
+        # Use a free, non-expiring Postgres like Neon (neon.tech) — paste
+        # its connection string here. If left unset, falls back to a local
+        # SQLite file, which does NOT persist across Render deploys.
 
   - type: web
     name: ad-tech-expense-tracker-frontend
