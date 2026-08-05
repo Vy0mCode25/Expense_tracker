@@ -341,6 +341,28 @@
   .login-error{ color:var(--coral); font-size:12.5px; margin-top:10px; min-height:16px; }
 
   body.locked > .sidebar, body.locked > .main{ display:none; }
+
+  /* ---------- Receipt image lightbox ---------- */
+  .lightbox-backdrop{
+    display:none;
+    position:fixed; inset:0; z-index:300;
+    background:rgba(15,25,17,0.85);
+    align-items:center; justify-content:center;
+    padding:30px;
+    cursor:zoom-out;
+  }
+  .lightbox-backdrop.show{ display:flex; }
+  .lightbox-backdrop img{
+    max-width:90vw; max-height:90vh;
+    border-radius:10px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.4);
+  }
+  .lightbox-close{
+    position:absolute; top:20px; right:28px;
+    color:#fff; font-size:28px; cursor:pointer;
+    width:40px; height:40px; display:flex; align-items:center; justify-content:center;
+    border-radius:50%; background:rgba(255,255,255,0.1);
+  }
 </style>
 </head>
 <body class="locked">
@@ -580,6 +602,11 @@
     </div>
   </div>
 
+</div>
+
+<div class="lightbox-backdrop" id="lightboxBackdrop" onclick="closeLightbox()">
+  <div class="lightbox-close" onclick="closeLightbox()">&times;</div>
+  <img id="lightboxImg" src="" onclick="event.stopPropagation()">
 </div>
 
 <script>
@@ -884,7 +911,16 @@ async function loadExpenses(){
 
 function receiptCell(base64){
   if(!base64) return '<span style="color:var(--muted)">—</span>';
-  return `<img src="${base64}" onclick="window.open(this.src)" style="width:34px; height:34px; object-fit:cover; border-radius:5px; cursor:pointer; border:1px solid var(--line);" title="Click to view full size">`;
+  return `<img src="${base64}" onclick="openLightbox('${base64}')" style="width:34px; height:34px; object-fit:cover; border-radius:5px; cursor:pointer; border:1px solid var(--line);" title="Click to view full size">`;
+}
+
+function openLightbox(base64){
+  document.getElementById('lightboxImg').src = base64;
+  document.getElementById('lightboxBackdrop').classList.add('show');
+}
+function closeLightbox(){
+  document.getElementById('lightboxBackdrop').classList.remove('show');
+  document.getElementById('lightboxImg').src = '';
 }
 
 function editExpense(id){
