@@ -194,6 +194,7 @@
   .btn-pdf{ background:var(--teal); color:#fff; }
   .btn-sm{ padding:5px 10px; font-size:12px; border-radius:5px; }
   .btn-danger{ background:var(--coral-bg); color:var(--coral); }
+  .btn-edit{ background:var(--sky-bg); color:var(--navy); }
 
   /* ---------- Card / Table ---------- */
   .card{
@@ -463,7 +464,7 @@
       <div><div class="page-title">Employee Expenses</div><div class="page-sub">Reimbursements &amp; claims, month-wise</div></div>
       <div class="topbar-actions">
         <input type="month" id="exp-month" class="month-input" onchange="loadExpenses()">
-        <button class="btn btn-primary" onclick="toggleForm('exp')">+ Add expense</button>
+        <button class="btn btn-primary" onclick="openAddExpenseForm()">+ Add expense</button>
       </div>
     </div>
     <div class="card">
@@ -473,15 +474,16 @@
           <div class="field"><label>Amount (₹)</label><input id="exp-amount" type="number" placeholder="2000"></div>
           <div class="field"><label>Reason</label><input id="exp-reason" placeholder="Travel reimbursement"></div>
           <div class="field"><label>Date</label><input id="exp-date" type="date"></div>
+          <div class="field"><label>Status</label><select id="exp-status"><option value="pending">Pending</option><option value="paid">Paid</option></select></div>
           <div class="field"><label>Bill / receipt photo</label><input id="exp-receipt" type="file" accept="image/*" onchange="previewReceipt(this)"></div>
         </div>
         <img id="exp-receipt-preview" style="display:none; max-height:80px; border-radius:6px; margin-bottom:12px; border:1px solid var(--line);">
-        <button class="btn btn-primary btn-sm" onclick="saveExpense()">Save expense</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleForm('exp')">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="saveExpense()" id="exp-save-btn">Save expense</button>
+        <button class="btn btn-ghost btn-sm" onclick="cancelExpenseForm()">Cancel</button>
       </div>
       <table>
-        <thead><tr><th>Employee</th><th>Amount</th><th>Reason</th><th>Date</th><th>Receipt</th><th></th></tr></thead>
-        <tbody id="expenses-body"><tr class="empty-row"><td colspan="6">Pick a month to see records</td></tr></tbody>
+        <thead><tr><th>Employee</th><th>Amount</th><th>Reason</th><th>Date</th><th>Status</th><th>Receipt</th><th></th></tr></thead>
+        <tbody id="expenses-body"><tr class="empty-row"><td colspan="7">Pick a month to see records</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -667,10 +669,26 @@ function previewReceipt(input){
   if(!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    const img = document.getElementById('exp-receipt-preview');
-    img.src = e.target.result;
-    img.style.display = 'inline-block';
-    img.dataset.base64 = e.target.result;
+    // Compress/resize before storing — phone camera photos can be several MB,
+    // which can silently fail to save. Resize to a reasonable max dimension.
+    const tempImg = new Image();
+    tempImg.onload = () => {
+      const maxDim = 1000;
+      let w = tempImg.width, h = tempImg.height;
+      if(w > maxDim || h > maxDim){
+        if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else{ w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(tempImg, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.75);
+      const img = document.getElementById('exp-receipt-preview');
+      img.src = compressed;
+      img.style.display = 'inline-block';
+      img.dataset.base64 = compressed;
+    };
+    tempImg.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -827,27 +845,80 @@ async function deleteSalary(id){
 }
 
 // ---------- Employee Expenses ----------
+let editingExpenseId = null;
+let expensesCache = [];
+
+function openAddExpenseForm(){
+  const panel = document.getElementById('form-exp');
+  const isOpen = panel.classList.contains('open');
+  if(isOpen && !editingExpenseId){
+    cancelExpenseForm();
+  }else{
+    if(editingExpenseId) cancelExpenseForm();
+    panel.classList.add('open');
+  }
+}
+
 async function loadExpenses(){
   const monthInput = document.getElementById('exp-month');
   if(!monthInput.value) monthInput.value = currentMonth();
   const month = monthInput.value;
-  const records = await api('/employee-expenses/?month='+month);
+  expensesCache = await api('/employee-expenses/?month='+month);
   const body = document.getElementById('expenses-body');
-  if(records.length===0){ body.innerHTML = '<tr class="empty-row"><td colspan="5">No expenses for this month yet</td></tr>'; return; }
-  body.innerHTML = records.map(r=>`
+  if(expensesCache.length===0){ body.innerHTML = '<tr class="empty-row"><td colspan="7">No expenses for this month yet</td></tr>'; return; }
+  body.innerHTML = expensesCache.map(r=>`
     <tr>
       <td>${employeeName(r.employee_id)}</td>
       <td class="amount">${fmt(r.amount)}</td>
       <td>${r.reason||'—'}</td>
       <td>${r.date||'—'}</td>
+      <td><span class="status-pill status-${r.status||'pending'}">${r.status||'pending'}</span></td>
       <td>${receiptCell(r.receipt_base64)}</td>
-      <td class="row-actions"><button class="btn btn-sm btn-danger" onclick="deleteExpense(${r.id})">Delete</button></td>
+      <td class="row-actions">
+        ${r.status!=='paid' ? `<button class="btn btn-sm" style="background:var(--teal-bg); color:var(--teal);" onclick="markExpensePaid(${r.id})">Mark Paid</button>` : ''}
+        <button class="btn btn-sm btn-edit" onclick="editExpense(${r.id})">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteExpense(${r.id})">Delete</button>
+      </td>
     </tr>`).join('');
 }
 
 function receiptCell(base64){
   if(!base64) return '<span style="color:var(--muted)">—</span>';
   return `<img src="${base64}" onclick="window.open(this.src)" style="width:34px; height:34px; object-fit:cover; border-radius:5px; cursor:pointer; border:1px solid var(--line);" title="Click to view full size">`;
+}
+
+function editExpense(id){
+  const r = expensesCache.find(x=>x.id===id);
+  if(!r) return;
+  editingExpenseId = id;
+  document.getElementById('exp-employee').value = r.employee_id;
+  document.getElementById('exp-amount').value = r.amount;
+  document.getElementById('exp-reason').value = r.reason || '';
+  document.getElementById('exp-date').value = r.date || '';
+  document.getElementById('exp-status').value = r.status || 'pending';
+  const previewImg = document.getElementById('exp-receipt-preview');
+  if(r.receipt_base64){
+    previewImg.src = r.receipt_base64;
+    previewImg.style.display = 'inline-block';
+    previewImg.dataset.base64 = r.receipt_base64;
+  }else{
+    previewImg.style.display = 'none';
+    previewImg.removeAttribute('data-base64');
+  }
+  document.getElementById('exp-save-btn').textContent = 'Update expense';
+  document.getElementById('form-exp').classList.add('open');
+}
+
+function cancelExpenseForm(){
+  editingExpenseId = null;
+  document.getElementById('exp-save-btn').textContent = 'Save expense';
+  ['exp-amount','exp-reason','exp-date'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('exp-status').value = 'pending';
+  document.getElementById('exp-receipt').value = '';
+  const previewImg = document.getElementById('exp-receipt-preview');
+  previewImg.style.display = 'none';
+  previewImg.removeAttribute('data-base64');
+  document.getElementById('form-exp').classList.remove('open');
 }
 
 async function saveExpense(){
@@ -858,15 +929,25 @@ async function saveExpense(){
     reason: document.getElementById('exp-reason').value || null,
     month: document.getElementById('exp-month').value || currentMonth(),
     date: document.getElementById('exp-date').value || null,
+    status: document.getElementById('exp-status').value,
     receipt_base64: previewImg.dataset.base64 || null,
   };
   if(!payload.employee_id){ alert('Add an employee first'); return; }
-  await api('/employee-expenses/', {method:'POST', body:JSON.stringify(payload)});
-  toggleForm('exp');
-  ['exp-amount','exp-reason','exp-date'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('exp-receipt').value = '';
-  previewImg.style.display = 'none';
-  previewImg.removeAttribute('data-base64');
+  try{
+    if(editingExpenseId){
+      await api('/employee-expenses/'+editingExpenseId, {method:'PUT', body:JSON.stringify(payload)});
+    }else{
+      await api('/employee-expenses/', {method:'POST', body:JSON.stringify(payload)});
+    }
+    cancelExpenseForm();
+    loadExpenses();
+  }catch(err){
+    alert('Could not save the expense. If you attached a photo, try a smaller one and try again.');
+  }
+}
+
+async function markExpensePaid(id){
+  await api(`/employee-expenses/${id}/status?status=paid`, {method:'PATCH'});
   loadExpenses();
 }
 
@@ -875,6 +956,7 @@ async function deleteExpense(id){
   await api('/employee-expenses/'+id, {method:'DELETE'});
   loadExpenses();
 }
+
 
 // ---------- Company Wages ----------
 async function loadWages(){

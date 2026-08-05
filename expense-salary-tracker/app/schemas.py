@@ -49,6 +49,7 @@ class EmployeeExpenseBase(BaseModel):
     reason: Optional[str] = None
     month: str  # "2026-08"
     date: Optional[datetime.date] = None
+    status: Optional[str] = "pending"
     receipt_base64: Optional[str] = None  # bill/receipt photo as a base64 data URL
 
 

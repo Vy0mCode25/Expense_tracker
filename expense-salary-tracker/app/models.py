@@ -38,6 +38,7 @@ class EmployeeExpense(Base):
     reason = Column(String, nullable=True)
     month = Column(String, nullable=False)  # format: "2026-08"
     date = Column(Date, nullable=True)
+    status = Column(String, default="pending")  # pending / paid
     receipt_base64 = Column(Text, nullable=True)  # bill/receipt photo, stored as base64 data URL
 
     employee = relationship("Employee", back_populates="expenses")

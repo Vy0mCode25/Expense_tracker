@@ -41,6 +41,20 @@ def update_employee_expense(expense_id: int, updated: schemas.EmployeeExpenseCre
     return expense
 
 
+@router.patch("/{expense_id}/status", response_model=schemas.EmployeeExpenseOut)
+def update_expense_status(expense_id: int, status: str, db: Session = Depends(get_db)):
+    """Quick toggle — pass ?status=paid or ?status=pending"""
+    if status not in ("paid", "pending"):
+        raise HTTPException(status_code=400, detail="status must be 'paid' or 'pending'")
+    expense = db.query(models.EmployeeExpense).filter(models.EmployeeExpense.id == expense_id).first()
+    if not expense:
+        raise HTTPException(status_code=404, detail="Employee expense not found")
+    expense.status = status
+    db.commit()
+    db.refresh(expense)
+    return expense
+
+
 @router.delete("/{expense_id}")
 def delete_employee_expense(expense_id: int, db: Session = Depends(get_db)):
     expense = db.query(models.EmployeeExpense).filter(models.EmployeeExpense.id == expense_id).first()
