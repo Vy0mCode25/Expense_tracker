@@ -28,3 +28,14 @@ app.include_router(summary.router)
 @app.get("/")
 def root():
     return {"message": "Company Expense & Salary Tracker API is running"}
+
+
+# TEMPORARY diagnostic route — remove once the database is confirmed to be persistent.
+# Does NOT reveal the password, only which type of database is actually active.
+@app.get("/debug-db-info")
+def debug_db_info():
+    import os
+    return {
+        "database_url_env_var_is_set": bool(os.environ.get("DATABASE_URL")),
+        "engine_dialect_in_use": engine.dialect.name,  # "postgresql" = correct, "sqlite" = still wrong
+    }
