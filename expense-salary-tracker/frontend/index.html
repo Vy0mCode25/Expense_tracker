@@ -326,19 +326,65 @@
   /* ---------- Login screen ---------- */
   .login-overlay{
     position:fixed; inset:0; z-index:200;
-    background:linear-gradient(160deg, var(--navy) 0%, #071B2D 100%);
+    background:
+      radial-gradient(circle at 20% 20%, rgba(62,120,82,0.35) 0%, transparent 45%),
+      radial-gradient(circle at 85% 75%, rgba(201,162,39,0.25) 0%, transparent 45%),
+      linear-gradient(160deg, var(--navy) 0%, #071B2D 100%);
     display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
   }
+  .login-blob{
+    position:absolute; border-radius:50%;
+    filter:blur(50px); opacity:0.5; pointer-events:none;
+  }
+  .login-blob.b1{ width:280px; height:280px; background:var(--teal); top:-60px; left:-80px; }
+  .login-blob.b2{ width:220px; height:220px; background:var(--sky); bottom:-60px; right:-60px; }
   .login-card{
-    background:#fff; border-radius:16px; padding:38px 34px 30px;
-    width:340px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.25);
+    position:relative; z-index:1;
+    background:rgba(255,255,255,0.97);
+    backdrop-filter:blur(20px);
+    border-radius:24px;
+    padding:42px 38px 34px;
+    width:360px; text-align:center;
+    border:1px solid rgba(255,255,255,0.6);
+    box-shadow:
+      0 2px 4px rgba(0,0,0,0.06),
+      0 12px 24px rgba(8,20,12,0.25),
+      0 32px 64px rgba(8,20,12,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.9);
+    transform:perspective(900px) rotateX(1.5deg);
   }
-  .login-card img{ width:56px; height:56px; border-radius:10px; margin-bottom:14px; }
-  .login-card h2{ font-family:'Space Grotesk', sans-serif; font-size:19px; margin-bottom:2px; }
-  .login-card .sub{ font-size:12px; color:var(--sky); letter-spacing:0.4px; margin-bottom:22px; }
-  .login-card input{ width:100%; text-align:center; padding:11px; font-size:14px; margin-bottom:12px; }
-  .login-card button{ width:100%; padding:11px; font-size:14px; }
-  .login-error{ color:var(--coral); font-size:12.5px; margin-top:10px; min-height:16px; }
+  .login-logo-ring{
+    width:80px; height:80px; border-radius:50%;
+    margin:0 auto 18px;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(145deg, var(--teal-bg), var(--sky-bg));
+    box-shadow:
+      0 8px 20px rgba(62,120,82,0.25),
+      inset 0 2px 4px rgba(255,255,255,0.8),
+      inset 0 -2px 4px rgba(31,52,35,0.1);
+  }
+  .login-card img{ width:46px; height:46px; border-radius:9px; object-fit:contain; }
+  .login-card h2{ font-family:'Space Grotesk', sans-serif; font-size:20px; margin-bottom:3px; letter-spacing:0.2px; }
+  .login-card .sub{ font-size:11.5px; color:var(--teal); letter-spacing:0.6px; margin-bottom:26px; font-weight:600; }
+  .login-card input{
+    width:100%; text-align:center; padding:13px; font-size:14px; margin-bottom:14px;
+    border-radius:12px; border:1.5px solid var(--line);
+    box-shadow:inset 0 2px 4px rgba(31,52,35,0.04);
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .login-card input:focus{
+    border-color:var(--teal);
+    box-shadow:inset 0 2px 4px rgba(31,52,35,0.04), 0 0 0 3px var(--teal-bg);
+  }
+  .login-card button{
+    width:100%; padding:13px; font-size:14px; border-radius:12px;
+    background:linear-gradient(160deg, var(--teal) 0%, var(--navy) 130%);
+    box-shadow:0 6px 16px rgba(62,120,82,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .login-card button:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(62,120,82,0.42); }
+  .login-error{ color:var(--coral); font-size:12.5px; margin-top:12px; min-height:16px; }
 
   body.locked > .sidebar, body.locked > .main{ display:none; }
 
@@ -368,8 +414,10 @@
 <body class="locked">
 
 <div class="login-overlay" id="loginOverlay">
+  <div class="login-blob b1"></div>
+  <div class="login-blob b2"></div>
   <div class="login-card">
-    <img src="assets/logo.png" alt="AD Tech Solution logo">
+    <div class="login-logo-ring"><img src="assets/logo.png" alt="AD Tech Solution logo" onerror="this.parentElement.innerHTML='🌿'; this.parentElement.style.fontSize='32px';"></div>
     <h2>AD Tech Solution</h2>
     <div class="sub">EXPENSE &amp; SALARY LEDGER</div>
     <input id="loginPassword" type="password" placeholder="Enter admin password" onkeydown="if(event.key==='Enter') doLogin()">
@@ -427,7 +475,7 @@
   <div class="page" id="page-employees">
     <div class="topbar">
       <div><div class="page-title">Employees</div><div class="page-sub">Everyone on the payroll, in one place</div></div>
-      <button class="btn btn-primary" onclick="toggleForm('emp')">+ Add employee</button>
+      <button class="btn btn-primary" onclick="openAddEmployeeForm()">+ Add employee</button>
     </div>
 
     <div class="stat-row" style="grid-template-columns:repeat(2,1fr); margin-bottom:22px;">
@@ -444,8 +492,8 @@
           <div class="field"><label>Contact</label><input id="emp-contact" placeholder="9999999999"></div>
           <div class="field"><label>Join date</label><input id="emp-joindate" type="date"></div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="saveEmployee()">Save employee</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleForm('emp')">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="saveEmployee()" id="emp-save-btn">Save employee</button>
+        <button class="btn btn-ghost btn-sm" onclick="cancelEmployeeForm()">Cancel</button>
       </div>
       <table>
         <thead><tr><th>Name</th><th>Designation</th><th>Salary</th><th>Contact</th><th>Joined</th><th></th></tr></thead>
@@ -516,7 +564,7 @@
       <div><div class="page-title">Company Wages</div><div class="page-sub">Rent, bills, vendors — other company costs</div></div>
       <div class="topbar-actions">
         <input type="month" id="wage-month" class="month-input" onchange="loadWages()">
-        <button class="btn btn-primary" onclick="toggleForm('wage')">+ Add entry</button>
+        <button class="btn btn-primary" onclick="openAddWageForm()">+ Add entry</button>
       </div>
     </div>
     <div class="card">
@@ -527,8 +575,8 @@
           <div class="field"><label>Date</label><input id="wage-date" type="date"></div>
           <div class="field"><label>Notes</label><input id="wage-notes" placeholder="Optional"></div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="saveWage()">Save entry</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleForm('wage')">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="saveWage()" id="wage-save-btn">Save entry</button>
+        <button class="btn btn-ghost btn-sm" onclick="cancelWageForm()">Cancel</button>
       </div>
       <table>
         <thead><tr><th>Title</th><th>Amount</th><th>Notes</th><th></th></tr></thead>
@@ -750,6 +798,8 @@ async function api(path, options={}){
 }
 
 // ---------- Employees ----------
+let editingEmployeeId = null;
+
 async function loadEmployees(){
   try{
     employeesCache = await api('/employees/');
@@ -767,7 +817,10 @@ async function loadEmployees(){
         <td class="amount">${fmt(e.salary)}</td>
         <td>${e.contact||'—'}</td>
         <td>${e.join_date||'—'}</td>
-        <td class="row-actions"><button class="btn btn-sm btn-danger" onclick="deleteEmployee(${e.id})">Delete</button></td>
+        <td class="row-actions">
+          <button class="btn btn-sm btn-edit" onclick="editEmployee(${e.id})">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${e.id})">Delete</button>
+        </td>
       </tr>`).join('');
     populateEmployeeDropdowns();
   }catch(err){
@@ -785,6 +838,33 @@ function populateEmployeeDropdowns(){
   document.getElementById('exp-employee').innerHTML = opts;
 }
 
+function openAddEmployeeForm(){
+  const panel = document.getElementById('form-emp');
+  const isOpen = panel.classList.contains('open');
+  if(isOpen && !editingEmployeeId){ cancelEmployeeForm(); }
+  else{ if(editingEmployeeId) cancelEmployeeForm(); panel.classList.add('open'); }
+}
+
+function editEmployee(id){
+  const e = employeesCache.find(x=>x.id===id);
+  if(!e) return;
+  editingEmployeeId = id;
+  document.getElementById('emp-name').value = e.name;
+  document.getElementById('emp-designation').value = e.designation || '';
+  document.getElementById('emp-salary').value = e.salary;
+  document.getElementById('emp-contact').value = e.contact || '';
+  document.getElementById('emp-joindate').value = e.join_date || '';
+  document.getElementById('emp-save-btn').textContent = 'Update employee';
+  document.getElementById('form-emp').classList.add('open');
+}
+
+function cancelEmployeeForm(){
+  editingEmployeeId = null;
+  document.getElementById('emp-save-btn').textContent = 'Save employee';
+  ['emp-name','emp-designation','emp-salary','emp-contact','emp-joindate'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('form-emp').classList.remove('open');
+}
+
 async function saveEmployee(){
   const payload = {
     name: document.getElementById('emp-name').value,
@@ -794,9 +874,12 @@ async function saveEmployee(){
     join_date: document.getElementById('emp-joindate').value || null,
   };
   if(!payload.name){ alert('Name is required'); return; }
-  await api('/employees/', {method:'POST', body:JSON.stringify(payload)});
-  toggleForm('emp');
-  ['emp-name','emp-designation','emp-salary','emp-contact','emp-joindate'].forEach(id=>document.getElementById(id).value='');
+  if(editingEmployeeId){
+    await api('/employees/'+editingEmployeeId, {method:'PUT', body:JSON.stringify(payload)});
+  }else{
+    await api('/employees/', {method:'POST', body:JSON.stringify(payload)});
+  }
+  cancelEmployeeForm();
   loadEmployees();
 }
 
@@ -995,20 +1078,52 @@ async function deleteExpense(id){
 
 
 // ---------- Company Wages ----------
+let editingWageId = null;
+let wagesCache = [];
+
 async function loadWages(){
   const monthInput = document.getElementById('wage-month');
   if(!monthInput.value) monthInput.value = currentMonth();
   const month = monthInput.value;
-  const records = await api('/company-wages/?month='+month);
+  wagesCache = await api('/company-wages/?month='+month);
   const body = document.getElementById('wages-body');
-  if(records.length===0){ body.innerHTML = '<tr class="empty-row"><td colspan="4">No entries for this month yet</td></tr>'; return; }
-  body.innerHTML = records.map(r=>`
+  if(wagesCache.length===0){ body.innerHTML = '<tr class="empty-row"><td colspan="4">No entries for this month yet</td></tr>'; return; }
+  body.innerHTML = wagesCache.map(r=>`
     <tr>
       <td>${r.title}</td>
       <td class="amount">${fmt(r.amount)}</td>
       <td>${r.notes||'—'}</td>
-      <td class="row-actions"><button class="btn btn-sm btn-danger" onclick="deleteWage(${r.id})">Delete</button></td>
+      <td class="row-actions">
+        <button class="btn btn-sm btn-edit" onclick="editWage(${r.id})">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteWage(${r.id})">Delete</button>
+      </td>
     </tr>`).join('');
+}
+
+function openAddWageForm(){
+  const panel = document.getElementById('form-wage');
+  const isOpen = panel.classList.contains('open');
+  if(isOpen && !editingWageId){ cancelWageForm(); }
+  else{ if(editingWageId) cancelWageForm(); panel.classList.add('open'); }
+}
+
+function editWage(id){
+  const r = wagesCache.find(x=>x.id===id);
+  if(!r) return;
+  editingWageId = id;
+  document.getElementById('wage-title').value = r.title;
+  document.getElementById('wage-amount').value = r.amount;
+  document.getElementById('wage-date').value = r.date || '';
+  document.getElementById('wage-notes').value = r.notes || '';
+  document.getElementById('wage-save-btn').textContent = 'Update entry';
+  document.getElementById('form-wage').classList.add('open');
+}
+
+function cancelWageForm(){
+  editingWageId = null;
+  document.getElementById('wage-save-btn').textContent = 'Save entry';
+  ['wage-title','wage-amount','wage-date','wage-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('form-wage').classList.remove('open');
 }
 
 async function saveWage(){
@@ -1020,9 +1135,12 @@ async function saveWage(){
     notes: document.getElementById('wage-notes').value || null,
   };
   if(!payload.title){ alert('Title is required'); return; }
-  await api('/company-wages/', {method:'POST', body:JSON.stringify(payload)});
-  toggleForm('wage');
-  ['wage-title','wage-amount','wage-date','wage-notes'].forEach(id=>document.getElementById(id).value='');
+  if(editingWageId){
+    await api('/company-wages/'+editingWageId, {method:'PUT', body:JSON.stringify(payload)});
+  }else{
+    await api('/company-wages/', {method:'POST', body:JSON.stringify(payload)});
+  }
+  cancelWageForm();
   loadWages();
 }
 
