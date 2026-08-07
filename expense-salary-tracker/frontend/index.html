@@ -510,7 +510,7 @@
     border-radius:50%; background:rgba(255,255,255,0.1);
   }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body class="locked">
 
@@ -782,11 +782,11 @@
     <div style="display:grid; grid-template-columns:1fr 1.4fr; gap:16px; margin-bottom:22px;">
       <div class="card" style="margin-bottom:0;">
         <div class="card-head"><div class="card-title">This Month's Split</div></div>
-        <div style="padding:20px; height:220px;"><canvas id="chart-donut"></canvas></div>
+        <div style="padding:20px; height:220px; position:relative;"><canvas id="chart-donut"></canvas></div>
       </div>
       <div class="card" style="margin-bottom:0;">
         <div class="card-head"><div class="card-title">Last 6 Months — Grand Total Trend</div></div>
-        <div style="padding:20px; height:220px;"><canvas id="chart-trend"></canvas></div>
+        <div style="padding:20px; height:220px; position:relative;"><canvas id="chart-trend"></canvas></div>
       </div>
     </div>
 
