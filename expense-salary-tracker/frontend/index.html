@@ -510,6 +510,7 @@
     border-radius:50%; background:rgba(255,255,255,0.1);
   }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 </head>
 <body class="locked">
 
@@ -776,6 +777,17 @@
       <div class="stat-card expense"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="stat-label">Employee Expense</div><div class="stat-value" id="sum-expense">₹0</div></div>
       <div class="stat-card wages"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg></div><div class="stat-label">Company Wages</div><div class="stat-value" id="sum-wages">₹0</div></div>
       <div class="stat-card total"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><div class="stat-label">Grand Total</div><div class="stat-value" id="sum-total">₹0</div></div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1.4fr; gap:16px; margin-bottom:22px;">
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-head"><div class="card-title">This Month's Split</div></div>
+        <div style="padding:20px; height:220px;"><canvas id="chart-donut"></canvas></div>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-head"><div class="card-title">Last 6 Months — Grand Total Trend</div></div>
+        <div style="padding:20px; height:220px;"><canvas id="chart-trend"></canvas></div>
+      </div>
     </div>
 
     <div class="stub"><div class="stub-dot"></div><div class="stub-line"></div>Detach for your records<div class="stub-line"></div><div class="stub-dot"></div></div>
@@ -1386,6 +1398,81 @@ async function loadSummary(){
   document.getElementById('summary-wages-body').innerHTML = wageRecords.length
     ? wageRecords.map(r=>`<tr><td>${r.title}</td><td class="amount">${fmt(r.amount)}</td><td>${r.notes||'—'}</td></tr>`).join('')
     : '<tr class="empty-row"><td colspan="3">No company wage entries this month</td></tr>';
+
+  renderDonutChart(totals);
+  renderTrendChart(month);
+}
+
+let donutChartInstance = null;
+let trendChartInstance = null;
+
+function renderDonutChart(totals){
+  const ctx = document.getElementById('chart-donut');
+  const data = [totals.total_salary, totals.total_employee_expense, totals.total_company_wages];
+  if(data.every(v => v === 0)){
+    if(donutChartInstance){ donutChartInstance.destroy(); donutChartInstance = null; }
+    return;
+  }
+  if(donutChartInstance) donutChartInstance.destroy();
+  donutChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Salary', 'Employee Expense', 'Company Wages'],
+      datasets: [{
+        data: data,
+        backgroundColor: ['#3E7852', '#B0603E', '#C9A227'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, color: '#20281E' } },
+        tooltip: { callbacks: { label: ctx => ctx.label + ': ' + fmt(ctx.raw) } }
+      },
+      cutout: '68%'
+    }
+  });
+}
+
+async function renderTrendChart(currentMonth){
+  const months = [];
+  const [y, m] = currentMonth.split('-').map(Number);
+  for(let i = 5; i >= 0; i--){
+    let mm = m - i, yy = y;
+    while(mm <= 0){ mm += 12; yy -= 1; }
+    months.push(yy + '-' + String(mm).padStart(2, '0'));
+  }
+  const monthTotals = await Promise.all(months.map(mo => api('/summary/'+mo)));
+  const ctx = document.getElementById('chart-trend');
+  if(trendChartInstance) trendChartInstance.destroy();
+  trendChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months.map(mo => {
+        const [yy, mm] = mo.split('-');
+        return new Date(yy, mm-1).toLocaleDateString('en-IN', {month:'short', year:'2-digit'});
+      }),
+      datasets: [{
+        label: 'Grand Total',
+        data: monthTotals.map(t => t.grand_total),
+        backgroundColor: '#3E7852',
+        borderRadius: 6,
+        maxBarThickness: 36,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => fmt(ctx.raw) } }
+      },
+      scales: {
+        y: { ticks: { callback: v => '₹' + v.toLocaleString('en-IN'), font: { size: 10 } }, grid: { color: '#EEF1EC' } },
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
 }
 
 async function downloadPdf(){
